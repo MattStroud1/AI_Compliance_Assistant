@@ -1113,7 +1113,7 @@ def show_neom_pitstops_view(project: NEOMProject):
                     if st.button("✅ Approve & Continue", key=f"approve_{pitstop.id}", type="primary"):
                         pitstop.status = PitstopStatus.APPROVED
                         pitstop.approved = True
-                        pitstop.approval_date = datetime.now()
+                        pitstop.approved_at = datetime.now()
 
                         # Send notification
                         if st.session_state.get("email_notifications_enabled"):
@@ -1133,14 +1133,14 @@ def show_neom_pitstops_view(project: NEOMProject):
                         st.warning("Issues raised. Team will be notified.")
                         st.rerun()
 
-            if pitstop.issues:
+            if pitstop.issues_raised:
                 st.markdown("**Issues Raised:**")
-                for issue in pitstop.issues:
+                for issue in pitstop.issues_raised:
                     st.markdown(f"- {issue}")
 
-            if pitstop.notes:
+            if pitstop.approval_notes:
                 st.markdown("**Notes:**")
-                st.text_area("", value=pitstop.notes, key=f"notes_{pitstop.id}", disabled=True)
+                st.text_area("", value=pitstop.approval_notes, key=f"notes_{pitstop.id}", disabled=True)
 
 
 # Main app logic
