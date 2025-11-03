@@ -994,8 +994,9 @@ def show_neom_phases_view(project: NEOMProject):
                                     help="The AI has drafted this answer based on your documents. Please review and edit as needed."
                                 )
 
-                                # Show sources
-                                with st.expander("📚 Sources", expanded=False):
+                                # Show sources with toggle
+                                show_sources = st.checkbox("📚 Show Sources", key=f"show_sources_{step.id}", value=False)
+                                if show_sources:
                                     sources = st.session_state.get(f"draft_sources_{step.id}", [])
                                     for i, source in enumerate(sources, 1):
                                         st.markdown(f"**{i}. {source['document']}** (Relevance: {source['similarity']:.0%})")
