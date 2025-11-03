@@ -43,7 +43,7 @@ from src.pathways.building import BuildingAIPathway
 from src.pathways.procuring import ProcuringAIPathway
 from src.pathways.operating import OperatingAIPathway
 from src.pathways.training import TrainingOnAIPathway
-from src.pathways.neom_building import NEOMBuildingAIPathway
+from src.pathways.neom_building_updated import NEOMBuildingAIPathway
 from src.storage.project_storage import ProjectStorageManager
 from src.notifications.email_service import EmailService
 from src.rag.document_rag import DocumentRAG
