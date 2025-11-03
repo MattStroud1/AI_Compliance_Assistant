@@ -121,7 +121,8 @@ class PitstopStatus(str, Enum):
     """Status of a pitstop checkpoint"""
     PENDING = "pending"
     SCHEDULED = "scheduled"
-    COMPLETED = "completed"
+    IN_REVIEW = "in_review"
+    APPROVED = "approved"
     ISSUES_RAISED = "issues_raised"
 
 
