@@ -1014,6 +1014,10 @@ def show_neom_phases_view(project: NEOMProject):
                         if st.session_state.rag_system and st.session_state.rag_documents:
                             st.markdown("**🤖 AI-Assisted Completion:**")
 
+                            # Display the regulatory requirement/control description
+                            if step.description:
+                                st.info(f"**Regulatory Requirement:**\n\n{step.description}")
+
                             # Generate question based on step
                             question = f"{step.title}: {step.description}"
 
