@@ -1012,14 +1012,22 @@ def show_neom_phases_view(project: NEOMProject):
                                         help="Guidance on what a complete answer should cover"
                                     )
 
-                                # Show sources with toggle
-                                show_sources = st.checkbox("📚 Show Sources", key=f"show_sources_{step.id}", value=False)
-                                if show_sources:
-                                    sources = st.session_state.get(f"draft_sources_{step.id}", [])
+                                # Show sources (always visible to help debug)
+                                st.markdown("**📚 Document Sources Used:**")
+                                sources = st.session_state.get(f"draft_sources_{step.id}", [])
+                                if sources:
                                     for i, source in enumerate(sources, 1):
-                                        st.markdown(f"**{i}. {source['document']}** (Relevance: {source['similarity']:.0%})")
-                                        st.caption(source['excerpt'])
-                                        st.markdown("---")
+                                        relevance = source['similarity']
+                                        color = "🟢" if relevance > 0.7 else "🟡" if relevance > 0.4 else "🔴"
+                                        st.markdown(f"{color} **{source['document']}** - Relevance: {relevance:.0%}")
+
+                                    show_excerpts = st.checkbox("Show excerpts", key=f"show_excerpts_{step.id}", value=False)
+                                    if show_excerpts:
+                                        for i, source in enumerate(sources, 1):
+                                            st.caption(f"{i}. {source['excerpt']}")
+                                            st.markdown("---")
+                                else:
+                                    st.caption("No sources retrieved")
 
                                 # Save edited answer to evidence
                                 if st.button("💾 Save This Answer", key=f"save_draft_{step.id}"):

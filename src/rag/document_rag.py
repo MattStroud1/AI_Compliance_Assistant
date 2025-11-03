@@ -199,18 +199,20 @@ class DocumentRAG:
             Generated answer extracted from documents
         """
         if not context_chunks:
-            return ""
+            return "No relevant information found in uploaded documents."
 
-        # Build context from retrieved chunks
+        # Build context from retrieved chunks (lowered threshold to 0.3)
         context_parts = []
+        max_score = 0.0
         for chunk, score in context_chunks:
-            if score > 0.5:  # Only use chunks with reasonable similarity
+            max_score = max(max_score, score)
+            if score > 0.3:  # Lowered from 0.5 to capture more context
                 context_parts.append(f"[From {chunk.document_name}]:\n{chunk.content}")
 
         context = "\n\n---\n\n".join(context_parts)
 
         if not context:
-            return ""
+            return f"No sufficiently relevant information found in documents (highest relevance: {max_score:.0%}). The uploaded documents may not contain details about this specific requirement."
 
         # Generate answer using GPT - focused on EXTRACTION not guidance
         prompt = f"""You are extracting specific information from project documentation to answer a compliance question.
@@ -225,8 +227,9 @@ Instructions:
 - If specific data, names, dates, processes, or details are mentioned, include them
 - Do NOT provide generic guidance or suggestions
 - Do NOT say what "should" be done - only say what IS described in the documents
-- If the documentation lacks information to answer the question, state: "Not found in documentation: [what's missing]"
+- If the documentation doesn't directly answer the question but has related info, extract what IS available
 - Be specific with facts, numbers, names, and concrete details from the documents
+- If critical information is missing, note: "Additional information needed: [what's missing]"
 
 Extracted Information:"""
 
