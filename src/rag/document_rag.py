@@ -187,16 +187,17 @@ class DocumentRAG:
 
         return results
 
-    def generate_answer(self, question: str, context_chunks: List[Tuple[DocumentChunk, float]]) -> str:
+    def generate_answer(self, question: str, context_chunks: List[Tuple[DocumentChunk, float]], guidance: str = "") -> str:
         """
         Generate an answer to a question based on retrieved context
 
         Args:
             question: Question to answer
             context_chunks: Retrieved document chunks with similarity scores
+            guidance: Guidance on what should be covered (for structuring)
 
         Returns:
-            Generated answer extracted from documents
+            Generated answer extracted from documents, structured to match guidance
         """
         if not context_chunks:
             return "No relevant information found in uploaded documents."
@@ -214,29 +215,36 @@ class DocumentRAG:
         if not context:
             return f"No sufficiently relevant information found in documents (highest relevance: {max_score:.0%}). The uploaded documents may not contain details about this specific requirement."
 
-        # Generate answer using GPT - focused on EXTRACTION not guidance
+        # Generate answer using GPT - structured to match guidance
+        guidance_structure = f"\n\nStructure your answer to address these points if information is available:\n{guidance}" if guidance else ""
+
         prompt = f"""You are extracting specific information from project documentation to answer a compliance question.
 
 Question: {question}
 
 Project Documentation:
-{context}
+{context}{guidance_structure}
 
 Instructions:
 - Extract and summarize ONLY the relevant factual information found in the documentation
+- Structure your answer using numbered sections that match the guidance points (if provided)
+- For each section, extract what IS available from the documents
 - If specific data, names, dates, processes, or details are mentioned, include them
 - Do NOT provide generic guidance or suggestions
 - Do NOT say what "should" be done - only say what IS described in the documents
-- If the documentation doesn't directly answer the question but has related info, extract what IS available
+- If a section has no information in the documents, write: "[No information found in documents]"
 - Be specific with facts, numbers, names, and concrete details from the documents
-- If critical information is missing, note: "Additional information needed: [what's missing]"
+
+Format your answer with numbered sections like:
+1. [Section topic]: [Extracted information or "No information found in documents"]
+2. [Section topic]: [Extracted information or "No information found in documents"]
 
 Extracted Information:"""
 
         response = self.client.chat.completions.create(
             model="gpt-4-turbo-preview",
             messages=[
-                {"role": "system", "content": "You are extracting factual information from project documents. Only report what is explicitly stated in the documents, never generic guidance."},
+                {"role": "system", "content": "You are extracting factual information from project documents. Structure your response to match the guidance sections. Only report what is explicitly stated in the documents."},
                 {"role": "user", "content": prompt}
             ],
             temperature=0.2,  # Lower temperature for more factual extraction
@@ -277,6 +285,49 @@ Guidance:"""
 
         return response.choices[0].message.content.strip()
 
+    def analyze_gaps(self, extracted_answer: str, guidance: str, question: str) -> str:
+        """
+        Analyze gaps between extracted answer and ideal answer
+
+        Args:
+            extracted_answer: What was found in documents
+            guidance: What should ideally be covered
+            question: The original question
+
+        Returns:
+            Gap analysis describing what's missing and needs to be added
+        """
+        prompt = f"""Compare what was extracted from documents versus what should ideally be covered, and identify gaps.
+
+Question: {question}
+
+What Should Be Covered (Ideal):
+{guidance}
+
+What Was Found in Documents (Actual):
+{extracted_answer}
+
+Instructions:
+- Identify which parts of the ideal answer are missing or incomplete in the extracted answer
+- Be specific about what information is lacking
+- Suggest what the user needs to add to complete the answer
+- If the extracted answer is complete, say "The extracted information appears complete."
+- Use bullet points for clarity
+
+Gap Analysis:"""
+
+        response = self.client.chat.completions.create(
+            model="gpt-4-turbo-preview",
+            messages=[
+                {"role": "system", "content": "You are analyzing gaps in compliance documentation. Be specific and actionable."},
+                {"role": "user", "content": prompt}
+            ],
+            temperature=0.3,
+            max_tokens=400
+        )
+
+        return response.choices[0].message.content.strip()
+
     def answer_question(self, question: str, top_k: Optional[int] = None) -> Dict[str, Any]:
         """
         Answer a question using RAG
@@ -286,7 +337,7 @@ Guidance:"""
             top_k: Number of chunks to retrieve
 
         Returns:
-            Dict with 'answer', 'guidance', 'sources', and 'confidence' keys
+            Dict with 'answer', 'guidance', 'gap_analysis', 'sources', and 'confidence' keys
         """
         # Retrieve relevant chunks
         chunks = self.retrieve(question, top_k)
@@ -296,14 +347,15 @@ Guidance:"""
 
         if not chunks:
             return {
-                "answer": "",
+                "answer": "No relevant information found in uploaded documents.",
                 "guidance": guidance,
+                "gap_analysis": "All information is missing from documents. Please add all required details manually.",
                 "sources": [],
                 "confidence": 0.0
             }
 
-        # Generate answer (what was found in docs)
-        answer = self.generate_answer(question, chunks)
+        # Generate answer (what was found in docs) - structured to match guidance
+        answer = self.generate_answer(question, chunks, guidance)
 
         # Calculate confidence (average similarity of top chunks)
         avg_similarity = np.mean([score for _, score in chunks[:3]])
@@ -318,9 +370,13 @@ Guidance:"""
             for chunk, score in chunks[:3]
         ]
 
+        # Analyze gaps between what was found vs what should be covered
+        gap_analysis = self.analyze_gaps(answer, guidance, question)
+
         return {
             "answer": answer,
             "guidance": guidance,
+            "gap_analysis": gap_analysis,
             "sources": sources,
             "confidence": float(avg_similarity)
         }

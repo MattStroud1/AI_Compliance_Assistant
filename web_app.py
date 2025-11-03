@@ -281,6 +281,55 @@ with st.sidebar:
 
         st.markdown("---")
 
+        # Answer History for Auditing
+        st.subheader("📋 Answer History")
+        if st.session_state.neom_project.evidence:
+            # Group evidence by phase
+            phase_names = {
+                PhaseType.PLANNING_DESIGN: "Phase 1: Planning & Design",
+                PhaseType.DATA_PREPARATION: "Phase 2: Data Preparation",
+                PhaseType.BUILD_VALIDATE: "Phase 3: Build & Validate",
+                PhaseType.DEPLOYMENT_MONITORING: "Phase 4: Deployment & Monitoring"
+            }
+
+            # Create dropdown options
+            evidence_options = []
+            for evidence in st.session_state.neom_project.evidence:
+                phase_name = phase_names.get(evidence.phase, "Unknown Phase")
+                if evidence.questions:
+                    question_title = list(evidence.questions.keys())[0]
+                    evidence_options.append(f"{phase_name} - {question_title}")
+                else:
+                    evidence_options.append(f"{phase_name} - {evidence.id[:8]}")
+
+            if evidence_options:
+                selected_evidence = st.selectbox(
+                    "View saved answers:",
+                    options=["Select an answer..."] + evidence_options,
+                    key="answer_history_selector"
+                )
+
+                if selected_evidence != "Select an answer...":
+                    # Find the selected evidence
+                    selected_idx = evidence_options.index(selected_evidence)
+                    evidence = st.session_state.neom_project.evidence[selected_idx]
+
+                    with st.expander("📄 Answer Details", expanded=True):
+                        if evidence.questions and evidence.answers:
+                            for question, answer_text in evidence.answers.items():
+                                st.markdown(f"**Q:** {question}")
+                                st.markdown(f"**A:** {answer_text}")
+                                st.markdown("---")
+
+                        if evidence.file_path:
+                            st.caption(f"📎 File: {evidence.file_path}")
+
+                        st.caption(f"🕒 Saved: {evidence.timestamp}")
+        else:
+            st.caption("No answers saved yet")
+
+        st.markdown("---")
+
         if st.button("🏠 Start Over", use_container_width=True):
             st.session_state.neom_project = None
             st.session_state.current_page = "welcome"
@@ -975,6 +1024,7 @@ def show_neom_phases_view(project: NEOMProject):
                                     if result["answer"] or result["guidance"]:
                                         st.session_state[f"draft_answer_{step.id}"] = result["answer"]
                                         st.session_state[f"draft_guidance_{step.id}"] = result["guidance"]
+                                        st.session_state[f"draft_gap_analysis_{step.id}"] = result["gap_analysis"]
                                         st.session_state[f"draft_sources_{step.id}"] = result["sources"]
                                         st.session_state[f"draft_confidence_{step.id}"] = result["confidence"]
                                         st.rerun()
@@ -1012,6 +1062,18 @@ def show_neom_phases_view(project: NEOMProject):
                                         help="Guidance on what a complete answer should cover"
                                     )
 
+                                # Gap Analysis Box
+                                st.markdown("**⚠️ Gap Analysis - What's Missing:**")
+                                gap_analysis = st.session_state.get(f"draft_gap_analysis_{step.id}", "")
+                                st.text_area(
+                                    "Weaknesses and information you need to add:",
+                                    value=gap_analysis,
+                                    height=150,
+                                    key=f"gap_analysis_{step.id}",
+                                    disabled=True,
+                                    help="This shows what information is missing or incomplete compared to the ideal answer"
+                                )
+
                                 # Show sources (always visible to help debug)
                                 st.markdown("**📚 Document Sources Used:**")
                                 sources = st.session_state.get(f"draft_sources_{step.id}", [])
@@ -1029,61 +1091,51 @@ def show_neom_phases_view(project: NEOMProject):
                                 else:
                                     st.caption("No sources retrieved")
 
-                                # Save edited answer to evidence
-                                if st.button("💾 Save This Answer", key=f"save_draft_{step.id}"):
-                                    st.session_state[f"evidence_answer_{step.id}"] = edited_answer
-                                    st.success("Answer saved! You can now collect evidence below.")
+                                # Save button and evidence upload
+                                st.markdown("---")
 
-                        # Evidence answer field
-                        answer_value = st.session_state.get(f"evidence_answer_{step.id}", "")
-                        evidence_answer = st.text_area(
-                            "Answer / Details:",
-                            value=answer_value,
-                            height=150,
-                            key=f"evidence_text_{step.id}",
-                            placeholder="Provide details or click 'Generate Answer from Documents' to use AI assistance",
-                            help="Enter your answer manually or use AI-generated content from above"
-                        )
-
-                        uploaded_file = st.file_uploader(
-                            "Upload Supporting Document (optional)",
-                            key=f"upload_{step.id}",
-                            type=["pdf", "docx", "txt", "md"]
-                        )
-
-                        if st.button("Save Evidence", key=f"save_evidence_{step.id}"):
-                            # Create evidence entry
-                            evidence_id = str(uuid.uuid4())
-                            evidence = Evidence(
-                                id=evidence_id,
-                                project_id=project.project_id,
-                                phase=phase.phase_type,
-                                step_id=step.id,
-                                evidence_type=EvidenceType(evidence_type),
-                                questions={step.title: step.description},
-                                answers={step.title: evidence_answer if evidence_answer else ""}
-                            )
-
-                            # Save uploaded file if provided
-                            if uploaded_file:
-                                temp_path = f"/tmp/{uploaded_file.name}"
-                                with open(temp_path, "wb") as f:
-                                    f.write(uploaded_file.getbuffer())
-
-                                file_path = st.session_state.storage_manager.save_evidence(
-                                    project.project_id,
-                                    evidence
+                                uploaded_file = st.file_uploader(
+                                    "📎 Upload Supporting Document (optional)",
+                                    key=f"upload_{step.id}",
+                                    type=["pdf", "docx", "txt", "md"],
+                                    help="Upload any supporting evidence documents"
                                 )
-                                evidence.file_path = str(file_path)
 
-                            project.evidence.append(evidence)
-                            st.success("Evidence saved!")
+                                if st.button("💾 Save Answer & Evidence", key=f"save_evidence_{step.id}", type="primary", use_container_width=True):
+                                    # Create evidence entry with edited answer
+                                    evidence_id = str(uuid.uuid4())
+                                    evidence = Evidence(
+                                        id=evidence_id,
+                                        project_id=project.project_id,
+                                        phase=phase.phase_type,
+                                        step_id=step.id,
+                                        evidence_type=EvidenceType(evidence_type),
+                                        questions={step.title: step.description},
+                                        answers={step.title: edited_answer if edited_answer else ""}
+                                    )
 
-                            # Clear draft answer after saving
-                            if f"draft_answer_{step.id}" in st.session_state:
-                                del st.session_state[f"draft_answer_{step.id}"]
-                            if f"evidence_answer_{step.id}" in st.session_state:
-                                del st.session_state[f"evidence_answer_{step.id}"]
+                                    # Save uploaded file if provided
+                                    if uploaded_file:
+                                        temp_path = f"/tmp/{uploaded_file.name}"
+                                        with open(temp_path, "wb") as f:
+                                            f.write(uploaded_file.getbuffer())
+
+                                        file_path = st.session_state.storage_manager.save_evidence(
+                                            project.project_id,
+                                            evidence
+                                        )
+                                        evidence.file_path = str(file_path)
+
+                                    project.evidence.append(evidence)
+                                    st.success("✅ Answer and evidence saved successfully!")
+
+                                    # Clear draft data after saving
+                                    if f"draft_answer_{step.id}" in st.session_state:
+                                        del st.session_state[f"draft_answer_{step.id}"]
+                                    if f"draft_guidance_{step.id}" in st.session_state:
+                                        del st.session_state[f"draft_guidance_{step.id}"]
+                                    if f"draft_gap_analysis_{step.id}" in st.session_state:
+                                        del st.session_state[f"draft_gap_analysis_{step.id}"]
 
                         col1, col2 = st.columns(2)
                         with col1:
