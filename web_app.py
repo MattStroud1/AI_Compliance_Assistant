@@ -1110,6 +1110,8 @@ def show_neom_phases_view(project: NEOMProject):
                                         phase=phase.phase_type,
                                         step_id=step.id,
                                         evidence_type=EvidenceType(evidence_type),
+                                        title=step.title,
+                                        description=step.description,
                                         questions={step.title: step.description},
                                         answers={step.title: edited_answer if edited_answer else ""}
                                     )
