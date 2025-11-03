@@ -26,6 +26,15 @@ from src.models import (
     RegulatoryFramework,
     UserFeedback,
     StepStatus,
+    NEOMProject,
+    PhaseType,
+    RACIMatrix,
+    RACIEntry,
+    RACIRole,
+    Evidence,
+    EvidenceType,
+    PitstopCheckpoint,
+    PitstopStatus,
 )
 from src.llm.openai_client import ComplianceGuidanceGenerator
 from src.document_processor.processor import DocumentProcessor
@@ -34,6 +43,9 @@ from src.pathways.building import BuildingAIPathway
 from src.pathways.procuring import ProcuringAIPathway
 from src.pathways.operating import OperatingAIPathway
 from src.pathways.training import TrainingOnAIPathway
+from src.pathways.neom_building import NEOMBuildingAIPathway
+from src.storage.project_storage import ProjectStorageManager
+from src.notifications.email_service import EmailService
 
 
 # Page configuration
@@ -124,6 +136,15 @@ def init_session_state():
     if "pathway_adapter" not in st.session_state:
         st.session_state.pathway_adapter = PathwayAdapter(st.session_state.llm_client)
 
+    if "storage_manager" not in st.session_state:
+        st.session_state.storage_manager = ProjectStorageManager()
+
+    if "email_service" not in st.session_state:
+        st.session_state.email_service = EmailService()
+
+    if "neom_project" not in st.session_state:
+        st.session_state.neom_project = None
+
 
 init_session_state()
 
@@ -169,6 +190,27 @@ with st.sidebar:
             st.session_state.current_page = "welcome"
             st.rerun()
 
+    elif st.session_state.neom_project:
+        st.info(f"**NEOM Project:** {st.session_state.neom_project.project_name}")
+
+        # Calculate overall progress
+        total_steps = sum(len(phase.steps) for phase in st.session_state.neom_project.phases)
+        completed_steps = sum(
+            1 for phase in st.session_state.neom_project.phases
+            for s in phase.steps if s.status == StepStatus.COMPLETED
+        )
+        progress = completed_steps / total_steps if total_steps > 0 else 0
+
+        st.progress(progress)
+        st.caption(f"Progress: {completed_steps}/{total_steps} steps completed")
+
+        st.markdown("---")
+
+        if st.button("🏠 Start Over", use_container_width=True):
+            st.session_state.neom_project = None
+            st.session_state.current_page = "welcome"
+            st.rerun()
+
     # About section
     st.markdown("---")
     with st.expander("ℹ️ About"):
@@ -177,7 +219,8 @@ with st.sidebar:
         **AI Compliance Assistant** helps you navigate EU AI Act and Saudi Arabian AI regulations.
 
         **Pathways:**
-        - 🔨 Building AI
+        - 🏗️ NEOM Building AI (Comprehensive 4-phase journey)
+        - 💬 AI Compliance Chatbot
         - 🛒 Procuring AI
         - ⚙️ Operating AI
         - 🎓 Training on AI
@@ -195,19 +238,34 @@ def show_welcome_page():
     ### Welcome! 👋
 
     This tool helps you navigate **EU AI Act** and **Saudi Arabian AI regulations**
-    through four specialized pathways tailored to your role and objectives.
+    through specialized pathways tailored to your role and objectives.
 
     **Choose your pathway below to get started:**
     """
     )
 
+    # NEOM Trustworthy AI Pathway (Featured)
+    st.markdown("### 🏢 NEOM Trustworthy AI")
+    if st.button(
+        "🏗️ **NEOM Building AI**\n\nComprehensive 4-phase journey for building trustworthy AI systems with evidence collection, RACI management, and pitstop checkpoints",
+        key="pathway_neom",
+        use_container_width=True,
+        type="primary",
+    ):
+        st.session_state.selected_pathway = "neom_building"
+        st.session_state.current_page = "neom_project_init"
+        st.rerun()
+
+    st.markdown("---")
+    st.markdown("### 📋 Standard Compliance Pathways")
+
     # Pathway cards
     pathways = {
-        PathwayType.BUILDING: {
+        "chatbot": {
             "pathway": BuildingAIPathway(),
-            "icon": "🔨",
-            "title": "Building AI",
-            "description": "For developers and teams creating AI systems",
+            "icon": "💬",
+            "title": "AI Compliance Chatbot",
+            "description": "Interactive chat-based guidance for AI compliance",
         },
         PathwayType.PROCURING: {
             "pathway": ProcuringAIPathway(),
@@ -235,7 +293,7 @@ def show_welcome_page():
         with cols[idx % 2]:
             if st.button(
                 f"{info['icon']} **{info['title']}**\n\n{info['description']}",
-                key=f"pathway_{pathway_type.value}",
+                key=f"pathway_{pathway_type.value if isinstance(pathway_type, PathwayType) else pathway_type}",
                 use_container_width=True,
             ):
                 st.session_state.selected_pathway = pathway_type
@@ -248,10 +306,11 @@ def show_welcome_page():
         """
     💡 **Not sure which pathway to choose?**
 
-    - **Building**: You're developing an AI system from scratch
-    - **Procuring**: You're evaluating and buying AI solutions from vendors
-    - **Operating**: You're deploying or managing AI systems in production
-    - **Training**: You want to learn about AI compliance requirements
+    - **NEOM Building AI**: Comprehensive 4-phase journey with evidence collection, RACI management, and formal pitstop checkpoints
+    - **AI Compliance Chatbot**: Quick chat-based guidance for general AI compliance questions
+    - **Procuring**: Evaluating and buying AI solutions from vendors
+    - **Operating**: Deploying or managing AI systems in production
+    - **Training**: Learning about AI compliance requirements
     """
     )
 
@@ -616,6 +675,489 @@ def show_pathway_page():
         )
 
 
+def show_neom_project_init_page():
+    """Display NEOM project initialization page"""
+    st.title("🏗️ NEOM Trustworthy AI - Project Initialization")
+
+    st.markdown("""
+    ### Create Your AI Compliance Project
+
+    This comprehensive pathway guides you through the **4 phases** of trustworthy AI development:
+    1. 📋 **Planning & Design** - Governance, scope, and risk analysis
+    2. 📊 **Data Preparation** - Data quality, bias mitigation, privacy
+    3. 🔨 **Build & Validate** - Model training, fairness, security validation
+    4. 🚀 **Deployment & Monitoring** - Deployment and continuous monitoring
+
+    Each phase includes **pitstop checkpoint meetings** for PDPO review and approval.
+    """)
+
+    st.markdown("---")
+    st.subheader("Project Information")
+
+    with st.form("neom_project_form"):
+        project_name = st.text_input(
+            "Project Name *",
+            placeholder="e.g., Customer Service Chatbot Project",
+            help="Internal name for tracking this project"
+        )
+
+        ai_system_name = st.text_input(
+            "AI System Name *",
+            placeholder="e.g., SmartBot Customer Assistant",
+            help="Official name of the AI system being developed"
+        )
+
+        ai_system_purpose = st.text_area(
+            "AI System Purpose *",
+            placeholder="Describe what this AI system will do and why...",
+            height=100,
+            help="Clear description of the AI system's intended purpose and use cases"
+        )
+
+        st.markdown("### RACI Matrix Setup")
+        st.markdown("Define key stakeholders and their roles (you can modify this later)")
+
+        col1, col2 = st.columns(2)
+
+        with col1:
+            project_lead_name = st.text_input("Project Lead Name *")
+            project_lead_email = st.text_input("Project Lead Email *")
+
+        with col2:
+            pdpo_name = st.text_input("PDPO Reviewer Name *")
+            pdpo_email = st.text_input("PDPO Reviewer Email *")
+
+        st.markdown("### Notification Settings")
+        email_notifications = st.checkbox(
+            "Enable email notifications for pitstop meetings",
+            value=True,
+            help="Send email invitations when pitstop checkpoints are ready for review"
+        )
+
+        col1, col2 = st.columns([1, 1])
+
+        with col1:
+            if st.form_submit_button("← Back", use_container_width=True):
+                st.session_state.current_page = "welcome"
+                st.rerun()
+
+        with col2:
+            submit = st.form_submit_button("Create Project →", type="primary", use_container_width=True)
+
+        if submit:
+            if not all([project_name, ai_system_name, ai_system_purpose,
+                       project_lead_name, project_lead_email, pdpo_name, pdpo_email]):
+                st.error("Please fill in all required fields marked with *")
+            else:
+                # Create NEOM project
+                project_id = str(uuid.uuid4())
+
+                # Create project folder structure
+                st.session_state.storage_manager.create_project_folder(project_id)
+
+                # Initialize RACI matrix
+                raci_matrix = RACIMatrix(
+                    project_id=project_id,
+                    entries=[
+                        RACIEntry(
+                            task_id="project_management",
+                            task_name="Overall Project Management",
+                            responsible=project_lead_name,
+                            accountable=project_lead_name,
+                            consulted=[pdpo_name],
+                            informed=[]
+                        )
+                    ]
+                )
+
+                # Create NEOM project
+                neom_project = NEOMProject(
+                    project_id=project_id,
+                    project_name=project_name,
+                    ai_system_name=ai_system_name,
+                    ai_system_purpose=ai_system_purpose,
+                    raci_matrix=raci_matrix,
+                    phases=[],
+                    evidence=[],
+                    pitstops=[]
+                )
+
+                # Initialize pathway and phases
+                pathway = NEOMBuildingAIPathway()
+                phases = pathway.create_phases(project_id)
+                neom_project.phases = phases
+
+                # Create initial pitstop (project initiation)
+                initial_pitstop = PitstopCheckpoint(
+                    id=str(uuid.uuid4()),
+                    project_id=project_id,
+                    phase_completed=PhaseType.PLANNING_DESIGN,
+                    status=PitstopStatus.PENDING,
+                    pdpo_reviewer=pdpo_email,
+                    participants=[project_lead_email, pdpo_email]
+                )
+                neom_project.pitstops.append(initial_pitstop)
+
+                # Store in session
+                st.session_state.neom_project = neom_project
+                st.session_state.email_notifications_enabled = email_notifications
+
+                st.success(f"✅ Project '{project_name}' created successfully!")
+                st.info(f"📁 Project ID: `{project_id}`")
+
+                st.session_state.current_page = "neom_pathway"
+                st.rerun()
+
+
+def show_neom_pathway_page():
+    """Display NEOM pathway with phases and steps"""
+    project = st.session_state.neom_project
+
+    if not project:
+        st.error("No NEOM project found. Please create a project first.")
+        if st.button("← Back to Home"):
+            st.session_state.current_page = "welcome"
+            st.rerun()
+        return
+
+    # Header
+    st.title(f"🏗️ {project.project_name}")
+    st.markdown(f"**AI System:** {project.ai_system_name}")
+    st.markdown(f"**Purpose:** {project.ai_system_purpose}")
+
+    # Tabs for different views
+    tab1, tab2, tab3, tab4 = st.tabs(["📋 Phases & Steps", "👥 RACI Matrix", "📄 Evidence", "🔍 Pitstops"])
+
+    with tab1:
+        show_neom_phases_view(project)
+
+    with tab2:
+        show_neom_raci_view(project)
+
+    with tab3:
+        show_neom_evidence_view(project)
+
+    with tab4:
+        show_neom_pitstops_view(project)
+
+
+def show_neom_phases_view(project: NEOMProject):
+    """Show phases and steps view"""
+    st.markdown("### Trustworthy AI Development Phases")
+
+    # Phase progress
+    phase_icons = {
+        PhaseType.PLANNING_DESIGN: "📋",
+        PhaseType.DATA_PREPARATION: "📊",
+        PhaseType.BUILD_VALIDATE: "🔨",
+        PhaseType.DEPLOYMENT_MONITORING: "🚀"
+    }
+
+    # Display phases
+    for phase in project.phases:
+        phase_completed = all(s.status == StepStatus.COMPLETED for s in phase.steps)
+        phase_in_progress = any(s.status == StepStatus.IN_PROGRESS for s in phase.steps)
+
+        status_emoji = "✅" if phase_completed else "🟡" if phase_in_progress else "⚪"
+
+        with st.expander(
+            f"{status_emoji} {phase_icons.get(phase.phase_type, '📌')} **Phase {phase.order}: {phase.name}**",
+            expanded=phase_in_progress or (not phase_completed and phase.order == 1)
+        ):
+            st.markdown(f"**Description:** {phase.description}")
+
+            # Steps in this phase
+            st.markdown(f"**Steps ({len(phase.steps)}):**")
+
+            for step in phase.steps:
+                step_status_emoji = {
+                    StepStatus.NOT_STARTED: "⚪",
+                    StepStatus.IN_PROGRESS: "🟡",
+                    StepStatus.COMPLETED: "✅",
+                    StepStatus.SKIPPED: "⏭️"
+                }[step.status]
+
+                with st.container():
+                    col1, col2 = st.columns([8, 2])
+
+                    with col1:
+                        st.markdown(f"{step_status_emoji} **{step.title}**")
+                        st.caption(step.description)
+
+                    with col2:
+                        if step.status == StepStatus.NOT_STARTED:
+                            if st.button("Start", key=f"start_step_{step.id}", use_container_width=True):
+                                step.status = StepStatus.IN_PROGRESS
+                                st.rerun()
+
+                    # Show details if in progress
+                    if step.status == StepStatus.IN_PROGRESS:
+                        st.markdown("**Checklist:**")
+                        for item in step.checklist_items:
+                            st.checkbox(item, key=f"check_{step.id}_{item[:30]}")
+
+                        # Evidence collection
+                        st.markdown("**📎 Collect Evidence:**")
+                        evidence_type = st.selectbox(
+                            "Evidence Type",
+                            [e.value for e in EvidenceType],
+                            key=f"evidence_type_{step.id}"
+                        )
+
+                        uploaded_file = st.file_uploader(
+                            "Upload Document (optional)",
+                            key=f"upload_{step.id}",
+                            type=["pdf", "docx", "txt", "md"]
+                        )
+
+                        if st.button("Save Evidence", key=f"save_evidence_{step.id}"):
+                            # Create evidence entry
+                            evidence_id = str(uuid.uuid4())
+                            evidence = Evidence(
+                                id=evidence_id,
+                                project_id=project.project_id,
+                                phase=phase.phase_type,
+                                step_id=step.id,
+                                evidence_type=EvidenceType(evidence_type),
+                                questions={},
+                                answers={}
+                            )
+
+                            # Save uploaded file if provided
+                            if uploaded_file:
+                                temp_path = f"/tmp/{uploaded_file.name}"
+                                with open(temp_path, "wb") as f:
+                                    f.write(uploaded_file.getbuffer())
+
+                                file_path = st.session_state.storage_manager.save_evidence(
+                                    project.project_id,
+                                    evidence
+                                )
+                                evidence.file_path = str(file_path)
+
+                            project.evidence.append(evidence)
+                            st.success("Evidence saved!")
+
+                        col1, col2 = st.columns(2)
+                        with col1:
+                            if st.button("✅ Mark Complete", key=f"complete_{step.id}", type="primary"):
+                                step.status = StepStatus.COMPLETED
+                                step.completed_at = datetime.now()
+                                st.rerun()
+
+                        with col2:
+                            if st.button("Skip", key=f"skip_{step.id}"):
+                                step.status = StepStatus.SKIPPED
+                                st.rerun()
+
+                    st.markdown("---")
+
+            # Check if phase is complete and show pitstop button
+            if phase_completed:
+                st.success(f"✅ Phase {phase.order} completed!")
+
+                # Check if pitstop exists for this phase
+                pitstop = next((p for p in project.pitstops if p.phase_completed == phase.phase_type), None)
+
+                if not pitstop:
+                    if st.button(f"📍 Schedule Pitstop Checkpoint for Phase {phase.order}",
+                               key=f"schedule_pitstop_{phase.phase_type.value}"):
+                        # Create pitstop
+                        pitstop_id = str(uuid.uuid4())
+                        new_pitstop = PitstopCheckpoint(
+                            id=pitstop_id,
+                            project_id=project.project_id,
+                            phase_completed=phase.phase_type,
+                            status=PitstopStatus.PENDING,
+                            pdpo_reviewer=project.raci_matrix.entries[0].accountable if project.raci_matrix else None,
+                            participants=[]
+                        )
+                        project.pitstops.append(new_pitstop)
+
+                        # Send email notification if enabled
+                        if st.session_state.get("email_notifications_enabled"):
+                            st.session_state.email_service.send_pitstop_notification(project, new_pitstop)
+
+                        st.success("Pitstop scheduled! Check the Pitstops tab.")
+                        st.rerun()
+
+
+def show_neom_raci_view(project: NEOMProject):
+    """Show RACI matrix management"""
+    st.markdown("### RACI Matrix")
+
+    st.info("""
+    **RACI Roles:**
+    - **R** = Responsible (does the work)
+    - **A** = Accountable (makes decisions)
+    - **C** = Consulted (provides input)
+    - **I** = Informed (kept updated)
+    """)
+
+    if project.raci_matrix and project.raci_matrix.entries:
+        for entry in project.raci_matrix.entries:
+            with st.expander(f"📌 {entry.task_name}", expanded=True):
+                col1, col2 = st.columns(2)
+
+                with col1:
+                    st.markdown(f"**Responsible:** {entry.responsible}")
+                    st.markdown(f"**Accountable:** {entry.accountable}")
+
+                with col2:
+                    st.markdown(f"**Consulted:** {', '.join(entry.consulted) if entry.consulted else 'None'}")
+                    st.markdown(f"**Informed:** {', '.join(entry.informed) if entry.informed else 'None'}")
+
+    # Add new RACI entry
+    st.markdown("---")
+    st.markdown("### Add New RACI Entry")
+
+    with st.form("add_raci_entry"):
+        task_name = st.text_input("Task Name")
+
+        col1, col2 = st.columns(2)
+        with col1:
+            responsible = st.text_input("Responsible Person")
+            accountable = st.text_input("Accountable Person")
+
+        with col2:
+            consulted = st.text_input("Consulted (comma-separated)")
+            informed = st.text_input("Informed (comma-separated)")
+
+        if st.form_submit_button("Add Entry", type="primary"):
+            if task_name and responsible and accountable:
+                new_entry = RACIEntry(
+                    task_id=str(uuid.uuid4()),
+                    task_name=task_name,
+                    responsible=responsible,
+                    accountable=accountable,
+                    consulted=[c.strip() for c in consulted.split(",")] if consulted else [],
+                    informed=[i.strip() for i in informed.split(",")] if informed else []
+                )
+
+                if not project.raci_matrix:
+                    project.raci_matrix = RACIMatrix(project_id=project.project_id, entries=[])
+
+                project.raci_matrix.entries.append(new_entry)
+                st.success("RACI entry added!")
+                st.rerun()
+
+
+def show_neom_evidence_view(project: NEOMProject):
+    """Show collected evidence"""
+    st.markdown("### Collected Evidence")
+
+    if not project.evidence:
+        st.info("No evidence collected yet. Evidence will appear here as you complete steps.")
+        return
+
+    # Group evidence by phase
+    phase_names = {
+        PhaseType.PLANNING_DESIGN: "Phase 1: Planning & Design",
+        PhaseType.DATA_PREPARATION: "Phase 2: Data Preparation",
+        PhaseType.BUILD_VALIDATE: "Phase 3: Build & Validate",
+        PhaseType.DEPLOYMENT_MONITORING: "Phase 4: Deployment & Monitoring"
+    }
+
+    for phase_type, phase_name in phase_names.items():
+        phase_evidence = [e for e in project.evidence if e.phase == phase_type]
+
+        if phase_evidence:
+            st.markdown(f"#### {phase_name}")
+
+            for evidence in phase_evidence:
+                with st.expander(f"📄 {evidence.evidence_type.value} - {evidence.id[:8]}"):
+                    st.markdown(f"**Type:** {evidence.evidence_type.value}")
+                    st.markdown(f"**Step ID:** {evidence.step_id}")
+
+                    if evidence.file_path:
+                        st.markdown(f"**File:** {evidence.file_path}")
+
+                    if evidence.signed_by:
+                        st.markdown(f"**Signed by:** {evidence.signed_by}")
+
+                    st.markdown(f"**Created:** {evidence.timestamp}")
+
+
+def show_neom_pitstops_view(project: NEOMProject):
+    """Show pitstop checkpoints"""
+    st.markdown("### Pitstop Checkpoints")
+
+    st.info("""
+    **Pitstop meetings** are formal checkpoints between phases where the PDPO reviews progress,
+    evidence, and approves moving to the next phase.
+    """)
+
+    if not project.pitstops:
+        st.warning("No pitstops scheduled yet. Complete a phase to schedule a pitstop.")
+        return
+
+    for pitstop in project.pitstops:
+        status_color = {
+            PitstopStatus.PENDING: "🟡",
+            PitstopStatus.SCHEDULED: "🔵",
+            PitstopStatus.IN_REVIEW: "🟣",
+            PitstopStatus.APPROVED: "✅",
+            PitstopStatus.ISSUES_RAISED: "❌"
+        }
+
+        phase_names = {
+            PhaseType.PLANNING_DESIGN: "Phase 1: Planning & Design",
+            PhaseType.DATA_PREPARATION: "Phase 2: Data Preparation",
+            PhaseType.BUILD_VALIDATE: "Phase 3: Build & Validate",
+            PhaseType.DEPLOYMENT_MONITORING: "Phase 4: Deployment & Monitoring"
+        }
+
+        with st.expander(
+            f"{status_color[pitstop.status]} Pitstop: {phase_names[pitstop.phase_completed]} - {pitstop.status.value}",
+            expanded=pitstop.status in [PitstopStatus.PENDING, PitstopStatus.IN_REVIEW]
+        ):
+            st.markdown(f"**Phase Completed:** {phase_names[pitstop.phase_completed]}")
+            st.markdown(f"**Status:** {pitstop.status.value}")
+            st.markdown(f"**PDPO Reviewer:** {pitstop.pdpo_reviewer}")
+
+            if pitstop.participants:
+                st.markdown(f"**Participants:** {', '.join(pitstop.participants)}")
+
+            if pitstop.scheduled_date:
+                st.markdown(f"**Scheduled:** {pitstop.scheduled_date}")
+
+            if pitstop.status == PitstopStatus.PENDING:
+                col1, col2 = st.columns(2)
+
+                with col1:
+                    if st.button("✅ Approve & Continue", key=f"approve_{pitstop.id}", type="primary"):
+                        pitstop.status = PitstopStatus.APPROVED
+                        pitstop.approved = True
+                        pitstop.approval_date = datetime.now()
+
+                        # Send notification
+                        if st.session_state.get("email_notifications_enabled"):
+                            st.session_state.email_service.send_approval_notification(project, pitstop)
+
+                        st.success("Phase approved! You can now proceed to the next phase.")
+                        st.rerun()
+
+                with col2:
+                    if st.button("❌ Raise Issues", key=f"issues_{pitstop.id}"):
+                        pitstop.status = PitstopStatus.ISSUES_RAISED
+
+                        # Send notification
+                        if st.session_state.get("email_notifications_enabled"):
+                            st.session_state.email_service.send_issues_notification(project, pitstop)
+
+                        st.warning("Issues raised. Team will be notified.")
+                        st.rerun()
+
+            if pitstop.issues:
+                st.markdown("**Issues Raised:**")
+                for issue in pitstop.issues:
+                    st.markdown(f"- {issue}")
+
+            if pitstop.notes:
+                st.markdown("**Notes:**")
+                st.text_area("", value=pitstop.notes, key=f"notes_{pitstop.id}", disabled=True)
+
+
 # Main app logic
 def main():
     """Main application logic"""
@@ -625,6 +1167,10 @@ def main():
         show_goal_setup_page()
     elif st.session_state.current_page == "pathway":
         show_pathway_page()
+    elif st.session_state.current_page == "neom_project_init":
+        show_neom_project_init_page()
+    elif st.session_state.current_page == "neom_pathway":
+        show_neom_pathway_page()
 
 
 if __name__ == "__main__":
