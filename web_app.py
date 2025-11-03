@@ -46,6 +46,7 @@ from src.pathways.training import TrainingOnAIPathway
 from src.pathways.neom_building import NEOMBuildingAIPathway
 from src.storage.project_storage import ProjectStorageManager
 from src.notifications.email_service import EmailService
+from src.rag.document_rag import DocumentRAG
 
 
 # Page configuration
@@ -145,6 +146,15 @@ def init_session_state():
     if "neom_project" not in st.session_state:
         st.session_state.neom_project = None
 
+    if "rag_system" not in st.session_state:
+        try:
+            st.session_state.rag_system = DocumentRAG()
+        except ValueError:
+            st.session_state.rag_system = None
+
+    if "rag_documents" not in st.session_state:
+        st.session_state.rag_documents = []
+
 
 init_session_state()
 
@@ -161,6 +171,71 @@ with st.sidebar:
         )
     else:
         st.success("✅ AI Guidance Enabled")
+
+    st.markdown("---")
+
+    # Document upload section
+    st.subheader("📚 Project Documents")
+
+    if st.session_state.rag_system:
+        st.success(f"✅ {len(st.session_state.rag_documents)} documents loaded")
+
+        with st.expander("Upload Documents", expanded=len(st.session_state.rag_documents) == 0):
+            st.markdown("""
+            Upload your project documents here. The AI will use these to automatically fill in compliance questions.
+
+            **Supported formats:** PDF, DOCX, TXT, MD
+            """)
+
+            uploaded_files = st.file_uploader(
+                "Choose files",
+                accept_multiple_files=True,
+                type=["pdf", "docx", "txt", "md"],
+                key="rag_uploader"
+            )
+
+            if st.button("Process Documents", key="process_rag_docs"):
+                if uploaded_files:
+                    with st.spinner("Processing documents..."):
+                        for uploaded_file in uploaded_files:
+                            try:
+                                # Save file temporarily
+                                temp_path = f"/tmp/{uploaded_file.name}"
+                                with open(temp_path, "wb") as f:
+                                    f.write(uploaded_file.getbuffer())
+
+                                # Process document
+                                doc = st.session_state.doc_processor.process_upload(
+                                    temp_path, uploaded_file.name
+                                )
+
+                                if doc.content:
+                                    # Add to RAG system
+                                    st.session_state.rag_system.add_documents([{
+                                        "id": doc.id,
+                                        "name": doc.filename,
+                                        "content": doc.content
+                                    }])
+
+                                    st.session_state.rag_documents.append({
+                                        "id": doc.id,
+                                        "name": doc.filename,
+                                        "size": len(doc.content)
+                                    })
+
+                            except Exception as e:
+                                st.error(f"Error processing {uploaded_file.name}: {str(e)}")
+
+                    st.success(f"✅ Processed {len(uploaded_files)} documents!")
+                    st.rerun()
+
+        # Show loaded documents
+        if st.session_state.rag_documents:
+            with st.expander("Loaded Documents", expanded=False):
+                for doc in st.session_state.rag_documents:
+                    st.markdown(f"📄 **{doc['name']}** ({doc['size']:,} chars)")
+    else:
+        st.warning("⚠️ RAG system requires OpenAI API key")
 
     st.markdown("---")
 
@@ -886,8 +961,65 @@ def show_neom_phases_view(project: NEOMProject):
                             key=f"evidence_type_{step.id}"
                         )
 
+                        # RAG-powered answer generation
+                        if st.session_state.rag_system and st.session_state.rag_documents:
+                            st.markdown("**🤖 AI-Assisted Completion:**")
+
+                            # Generate question based on step
+                            question = f"{step.title}: {step.description}"
+
+                            if st.button("✨ Generate Answer from Documents", key=f"rag_gen_{step.id}"):
+                                with st.spinner("Analyzing your project documents..."):
+                                    result = st.session_state.rag_system.answer_question(question)
+
+                                    if result["answer"]:
+                                        st.session_state[f"draft_answer_{step.id}"] = result["answer"]
+                                        st.session_state[f"draft_sources_{step.id}"] = result["sources"]
+                                        st.session_state[f"draft_confidence_{step.id}"] = result["confidence"]
+                                        st.rerun()
+
+                            # Show draft answer if generated
+                            if f"draft_answer_{step.id}" in st.session_state:
+                                confidence = st.session_state.get(f"draft_confidence_{step.id}", 0)
+                                confidence_color = "green" if confidence > 0.7 else "orange" if confidence > 0.5 else "red"
+
+                                st.markdown(f"**AI-Generated Answer** (Confidence: :{confidence_color}[{confidence:.0%}])")
+
+                                # Editable answer
+                                edited_answer = st.text_area(
+                                    "Review and edit the answer:",
+                                    value=st.session_state[f"draft_answer_{step.id}"],
+                                    height=200,
+                                    key=f"edit_answer_{step.id}",
+                                    help="The AI has drafted this answer based on your documents. Please review and edit as needed."
+                                )
+
+                                # Show sources
+                                with st.expander("📚 Sources", expanded=False):
+                                    sources = st.session_state.get(f"draft_sources_{step.id}", [])
+                                    for i, source in enumerate(sources, 1):
+                                        st.markdown(f"**{i}. {source['document']}** (Relevance: {source['similarity']:.0%})")
+                                        st.caption(source['excerpt'])
+                                        st.markdown("---")
+
+                                # Save edited answer to evidence
+                                if st.button("💾 Save This Answer", key=f"save_draft_{step.id}"):
+                                    st.session_state[f"evidence_answer_{step.id}"] = edited_answer
+                                    st.success("Answer saved! You can now collect evidence below.")
+
+                        # Evidence answer field
+                        answer_value = st.session_state.get(f"evidence_answer_{step.id}", "")
+                        evidence_answer = st.text_area(
+                            "Answer / Details:",
+                            value=answer_value,
+                            height=150,
+                            key=f"evidence_text_{step.id}",
+                            placeholder="Provide details or click 'Generate Answer from Documents' to use AI assistance",
+                            help="Enter your answer manually or use AI-generated content from above"
+                        )
+
                         uploaded_file = st.file_uploader(
-                            "Upload Document (optional)",
+                            "Upload Supporting Document (optional)",
                             key=f"upload_{step.id}",
                             type=["pdf", "docx", "txt", "md"]
                         )
@@ -901,8 +1033,8 @@ def show_neom_phases_view(project: NEOMProject):
                                 phase=phase.phase_type,
                                 step_id=step.id,
                                 evidence_type=EvidenceType(evidence_type),
-                                questions={},
-                                answers={}
+                                questions={step.title: step.description},
+                                answers={step.title: evidence_answer if evidence_answer else ""}
                             )
 
                             # Save uploaded file if provided
@@ -919,6 +1051,12 @@ def show_neom_phases_view(project: NEOMProject):
 
                             project.evidence.append(evidence)
                             st.success("Evidence saved!")
+
+                            # Clear draft answer after saving
+                            if f"draft_answer_{step.id}" in st.session_state:
+                                del st.session_state[f"draft_answer_{step.id}"]
+                            if f"evidence_answer_{step.id}" in st.session_state:
+                                del st.session_state[f"evidence_answer_{step.id}"]
 
                         col1, col2 = st.columns(2)
                         with col1:
@@ -1053,6 +1191,15 @@ def show_neom_evidence_view(project: NEOMProject):
                 with st.expander(f"📄 {evidence.evidence_type.value} - {evidence.id[:8]}"):
                     st.markdown(f"**Type:** {evidence.evidence_type.value}")
                     st.markdown(f"**Step ID:** {evidence.step_id}")
+
+                    # Show questions and answers
+                    if evidence.questions and evidence.answers:
+                        st.markdown("**Questions & Answers:**")
+                        for question, desc in evidence.questions.items():
+                            st.markdown(f"**Q:** {question}")
+                            if question in evidence.answers:
+                                st.markdown(f"**A:** {evidence.answers[question]}")
+                            st.markdown("---")
 
                     if evidence.file_path:
                         st.markdown(f"**File:** {evidence.file_path}")
