@@ -760,11 +760,10 @@ def show_neom_project_init_page():
                     project_id=project_id,
                     entries=[
                         RACIEntry(
-                            task_id="project_management",
                             task_name="Overall Project Management",
-                            responsible=project_lead_name,
-                            accountable=project_lead_name,
-                            consulted=[pdpo_name],
+                            responsible=[project_lead_email],
+                            accountable=[project_lead_email],
+                            consulted=[pdpo_email],
                             informed=[]
                         )
                     ]
@@ -1000,8 +999,8 @@ def show_neom_raci_view(project: NEOMProject):
                 col1, col2 = st.columns(2)
 
                 with col1:
-                    st.markdown(f"**Responsible:** {entry.responsible}")
-                    st.markdown(f"**Accountable:** {entry.accountable}")
+                    st.markdown(f"**Responsible:** {', '.join(entry.responsible) if entry.responsible else 'None'}")
+                    st.markdown(f"**Accountable:** {', '.join(entry.accountable) if entry.accountable else 'None'}")
 
                 with col2:
                     st.markdown(f"**Consulted:** {', '.join(entry.consulted) if entry.consulted else 'None'}")
@@ -1016,20 +1015,23 @@ def show_neom_raci_view(project: NEOMProject):
 
         col1, col2 = st.columns(2)
         with col1:
-            responsible = st.text_input("Responsible Person")
-            accountable = st.text_input("Accountable Person")
+            responsible = st.text_input("Responsible (comma-separated emails)",
+                                       placeholder="user1@example.com, user2@example.com")
+            accountable = st.text_input("Accountable (comma-separated emails)",
+                                       placeholder="manager@example.com")
 
         with col2:
-            consulted = st.text_input("Consulted (comma-separated)")
-            informed = st.text_input("Informed (comma-separated)")
+            consulted = st.text_input("Consulted (comma-separated emails)",
+                                     placeholder="advisor@example.com")
+            informed = st.text_input("Informed (comma-separated emails)",
+                                    placeholder="team@example.com")
 
         if st.form_submit_button("Add Entry", type="primary"):
             if task_name and responsible and accountable:
                 new_entry = RACIEntry(
-                    task_id=str(uuid.uuid4()),
                     task_name=task_name,
-                    responsible=responsible,
-                    accountable=accountable,
+                    responsible=[r.strip() for r in responsible.split(",")] if responsible else [],
+                    accountable=[a.strip() for a in accountable.split(",")] if accountable else [],
                     consulted=[c.strip() for c in consulted.split(",")] if consulted else [],
                     informed=[i.strip() for i in informed.split(",")] if informed else []
                 )
