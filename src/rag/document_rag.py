@@ -196,7 +196,7 @@ class DocumentRAG:
             context_chunks: Retrieved document chunks with similarity scores
 
         Returns:
-            Generated answer
+            Generated answer extracted from documents
         """
         if not context_chunks:
             return ""
@@ -212,8 +212,8 @@ class DocumentRAG:
         if not context:
             return ""
 
-        # Generate answer using GPT
-        prompt = f"""Based on the following project documentation, please answer this question:
+        # Generate answer using GPT - focused on EXTRACTION not guidance
+        prompt = f"""You are extracting specific information from project documentation to answer a compliance question.
 
 Question: {question}
 
@@ -221,21 +221,55 @@ Project Documentation:
 {context}
 
 Instructions:
-- Provide a clear, concise answer based ONLY on the information in the documentation
-- If the documentation doesn't contain enough information, note what's missing
-- Format the answer appropriately (bullet points, paragraphs, etc.)
-- Be specific and cite relevant details from the documents
+- Extract and summarize ONLY the relevant factual information found in the documentation
+- If specific data, names, dates, processes, or details are mentioned, include them
+- Do NOT provide generic guidance or suggestions
+- Do NOT say what "should" be done - only say what IS described in the documents
+- If the documentation lacks information to answer the question, state: "Not found in documentation: [what's missing]"
+- Be specific with facts, numbers, names, and concrete details from the documents
 
-Answer:"""
+Extracted Information:"""
 
         response = self.client.chat.completions.create(
             model="gpt-4-turbo-preview",
             messages=[
-                {"role": "system", "content": "You are an AI compliance assistant helping to extract information from project documentation to fill out compliance forms."},
+                {"role": "system", "content": "You are extracting factual information from project documents. Only report what is explicitly stated in the documents, never generic guidance."},
                 {"role": "user", "content": prompt}
             ],
-            temperature=0.3,
-            max_tokens=1000
+            temperature=0.2,  # Lower temperature for more factual extraction
+            max_tokens=800
+        )
+
+        return response.choices[0].message.content.strip()
+
+    def generate_guidance(self, question: str) -> str:
+        """
+        Generate guidance on what an ideal answer should cover
+
+        Args:
+            question: The compliance question
+
+        Returns:
+            Guidance text describing what should be included in the answer
+        """
+        prompt = f"""For this AI compliance question, provide brief guidance on what an ideal answer should cover.
+
+Question: {question}
+
+Provide a concise description (2-4 bullet points) of what information should ideally be included in the answer to properly address this compliance requirement.
+
+Focus on WHAT to include, not HOW to do it.
+
+Guidance:"""
+
+        response = self.client.chat.completions.create(
+            model="gpt-4-turbo-preview",
+            messages=[
+                {"role": "system", "content": "You are a compliance expert providing guidance on what information compliance answers should contain."},
+                {"role": "user", "content": prompt}
+            ],
+            temperature=0.4,
+            max_tokens=300
         )
 
         return response.choices[0].message.content.strip()
@@ -249,19 +283,23 @@ Answer:"""
             top_k: Number of chunks to retrieve
 
         Returns:
-            Dict with 'answer', 'sources', and 'confidence' keys
+            Dict with 'answer', 'guidance', 'sources', and 'confidence' keys
         """
         # Retrieve relevant chunks
         chunks = self.retrieve(question, top_k)
 
+        # Generate guidance (what should be covered)
+        guidance = self.generate_guidance(question)
+
         if not chunks:
             return {
                 "answer": "",
+                "guidance": guidance,
                 "sources": [],
                 "confidence": 0.0
             }
 
-        # Generate answer
+        # Generate answer (what was found in docs)
         answer = self.generate_answer(question, chunks)
 
         # Calculate confidence (average similarity of top chunks)
@@ -279,6 +317,7 @@ Answer:"""
 
         return {
             "answer": answer,
+            "guidance": guidance,
             "sources": sources,
             "confidence": float(avg_similarity)
         }

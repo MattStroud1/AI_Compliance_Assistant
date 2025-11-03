@@ -972,8 +972,9 @@ def show_neom_phases_view(project: NEOMProject):
                                 with st.spinner("Analyzing your project documents..."):
                                     result = st.session_state.rag_system.answer_question(question)
 
-                                    if result["answer"]:
+                                    if result["answer"] or result["guidance"]:
                                         st.session_state[f"draft_answer_{step.id}"] = result["answer"]
+                                        st.session_state[f"draft_guidance_{step.id}"] = result["guidance"]
                                         st.session_state[f"draft_sources_{step.id}"] = result["sources"]
                                         st.session_state[f"draft_confidence_{step.id}"] = result["confidence"]
                                         st.rerun()
@@ -983,16 +984,33 @@ def show_neom_phases_view(project: NEOMProject):
                                 confidence = st.session_state.get(f"draft_confidence_{step.id}", 0)
                                 confidence_color = "green" if confidence > 0.7 else "orange" if confidence > 0.5 else "red"
 
-                                st.markdown(f"**AI-Generated Answer** (Confidence: :{confidence_color}[{confidence:.0%}])")
+                                st.markdown(f"**AI Analysis** (Confidence: :{confidence_color}[{confidence:.0%}])")
 
-                                # Editable answer
-                                edited_answer = st.text_area(
-                                    "Review and edit the answer:",
-                                    value=st.session_state[f"draft_answer_{step.id}"],
-                                    height=200,
-                                    key=f"edit_answer_{step.id}",
-                                    help="The AI has drafted this answer based on your documents. Please review and edit as needed."
-                                )
+                                # Two-column layout
+                                col_answer, col_guidance = st.columns(2)
+
+                                with col_answer:
+                                    st.markdown("**📄 Extracted from Your Documents:**")
+                                    # Editable answer
+                                    edited_answer = st.text_area(
+                                        "Information found in your documents:",
+                                        value=st.session_state[f"draft_answer_{step.id}"],
+                                        height=250,
+                                        key=f"edit_answer_{step.id}",
+                                        help="This is what the AI found in your uploaded documents. Edit as needed."
+                                    )
+
+                                with col_guidance:
+                                    st.markdown("**💡 What Should Be Covered:**")
+                                    guidance_text = st.session_state.get(f"draft_guidance_{step.id}", "")
+                                    st.text_area(
+                                        "Ideal answer should include:",
+                                        value=guidance_text,
+                                        height=250,
+                                        key=f"guidance_{step.id}",
+                                        disabled=True,
+                                        help="Guidance on what a complete answer should cover"
+                                    )
 
                                 # Show sources with toggle
                                 show_sources = st.checkbox("📚 Show Sources", key=f"show_sources_{step.id}", value=False)
