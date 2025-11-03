@@ -219,8 +219,7 @@ with st.sidebar:
         **AI Compliance Assistant** helps you navigate EU AI Act and Saudi Arabian AI regulations.
 
         **Pathways:**
-        - 🏗️ NEOM Building AI (Comprehensive 4-phase journey)
-        - 💬 AI Compliance Chatbot
+        - 🏗️ Building AI
         - 🛒 Procuring AI
         - ⚙️ Operating AI
         - 🎓 Training on AI
@@ -244,46 +243,31 @@ def show_welcome_page():
     """
     )
 
-    # NEOM Trustworthy AI Pathway (Featured)
-    st.markdown("### 🏢 NEOM Trustworthy AI")
-    if st.button(
-        "🏗️ **NEOM Building AI**\n\nComprehensive 4-phase journey for building trustworthy AI systems with evidence collection, RACI management, and pitstop checkpoints",
-        key="pathway_neom",
-        use_container_width=True,
-        type="primary",
-    ):
-        st.session_state.selected_pathway = "neom_building"
-        st.session_state.current_page = "neom_project_init"
-        st.rerun()
-
-    st.markdown("---")
-    st.markdown("### 📋 Standard Compliance Pathways")
-
     # Pathway cards
     pathways = {
-        "chatbot": {
-            "pathway": BuildingAIPathway(),
-            "icon": "💬",
-            "title": "AI Compliance Chatbot",
-            "description": "Interactive chat-based guidance for AI compliance",
+        "neom_building": {
+            "icon": "🏗️",
+            "title": "Building AI",
+            "description": "Comprehensive 4-phase journey for building trustworthy AI systems with evidence collection, RACI management, and pitstop checkpoints",
+            "page": "neom_project_init",
         },
         PathwayType.PROCURING: {
-            "pathway": ProcuringAIPathway(),
             "icon": "🛒",
             "title": "Procuring AI",
             "description": "For organizations purchasing AI solutions",
+            "page": "setup_goal",
         },
         PathwayType.OPERATING: {
-            "pathway": OperatingAIPathway(),
             "icon": "⚙️",
             "title": "Operating AI",
             "description": "For teams deploying and managing AI systems",
+            "page": "setup_goal",
         },
         PathwayType.TRAINING: {
-            "pathway": TrainingOnAIPathway(),
             "icon": "🎓",
             "title": "Training on AI",
             "description": "For individuals learning about AI compliance",
+            "page": "setup_goal",
         },
     }
 
@@ -297,7 +281,7 @@ def show_welcome_page():
                 use_container_width=True,
             ):
                 st.session_state.selected_pathway = pathway_type
-                st.session_state.current_page = "setup_goal"
+                st.session_state.current_page = info["page"]
                 st.rerun()
 
     # Additional info
@@ -306,11 +290,10 @@ def show_welcome_page():
         """
     💡 **Not sure which pathway to choose?**
 
-    - **NEOM Building AI**: Comprehensive 4-phase journey with evidence collection, RACI management, and formal pitstop checkpoints
-    - **AI Compliance Chatbot**: Quick chat-based guidance for general AI compliance questions
-    - **Procuring**: Evaluating and buying AI solutions from vendors
-    - **Operating**: Deploying or managing AI systems in production
-    - **Training**: Learning about AI compliance requirements
+    - **Building AI**: Comprehensive 4-phase journey with evidence collection, RACI management, and formal pitstop checkpoints for developing AI systems
+    - **Procuring AI**: Evaluating and purchasing AI solutions from vendors
+    - **Operating AI**: Deploying and managing AI systems in production
+    - **Training on AI**: Learning about AI compliance requirements
     """
     )
 
