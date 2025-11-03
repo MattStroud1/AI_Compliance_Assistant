@@ -103,3 +103,185 @@ class PathwayConfig(BaseModel):
     icon: str
     default_steps: List[str]
     regulatory_focus: List[RegulatoryFramework]
+
+
+# ============================================================================
+# NEOM TRUSTWORTHY AI MODELS
+# ============================================================================
+
+class PhaseType(str, Enum):
+    """Four phases of NEOM Trustworthy AI development"""
+    PLANNING_DESIGN = "planning_design"
+    DATA_PREPARATION = "data_preparation"
+    BUILD_VALIDATE = "build_validate"
+    DEPLOYMENT_MONITORING = "deployment_monitoring"
+
+
+class PitstopStatus(str, Enum):
+    """Status of a pitstop checkpoint"""
+    PENDING = "pending"
+    SCHEDULED = "scheduled"
+    COMPLETED = "completed"
+    ISSUES_RAISED = "issues_raised"
+
+
+class RACIRole(str, Enum):
+    """RACI role types"""
+    RESPONSIBLE = "responsible"  # Does the work
+    ACCOUNTABLE = "accountable"  # Ultimately answerable
+    CONSULTED = "consulted"      # Provides input
+    INFORMED = "informed"        # Kept updated
+
+
+class EvidenceType(str, Enum):
+    """Types of evidence that can be collected"""
+    DOCUMENT = "document"
+    CHECKLIST = "checklist"
+    ASSESSMENT = "assessment"
+    METRIC = "metric"
+    SIGN_OFF = "sign_off"
+
+
+class RACIEntry(BaseModel):
+    """A single entry in the RACI matrix"""
+    task_name: str
+    responsible: List[str] = Field(default_factory=list)  # Email addresses
+    accountable: List[str] = Field(default_factory=list)
+    consulted: List[str] = Field(default_factory=list)
+    informed: List[str] = Field(default_factory=list)
+    notes: Optional[str] = None
+
+
+class RACIMatrix(BaseModel):
+    """Complete RACI matrix for a project"""
+    project_id: str
+    entries: List[RACIEntry] = Field(default_factory=list)
+    created_at: datetime = Field(default_factory=datetime.now)
+    updated_at: datetime = Field(default_factory=datetime.now)
+    version: int = 1
+    approved_by: Optional[str] = None
+    approved_at: Optional[datetime] = None
+
+
+class Evidence(BaseModel):
+    """A piece of evidence collected during compliance journey"""
+    id: str
+    project_id: str
+    phase: PhaseType
+    step_id: str
+    evidence_type: EvidenceType
+    title: str
+    description: Optional[str] = None
+
+    # For documents
+    file_path: Optional[str] = None
+    file_name: Optional[str] = None
+
+    # For checklists/assessments
+    questions: Dict[str, Any] = Field(default_factory=dict)
+    answers: Dict[str, Any] = Field(default_factory=dict)
+
+    # For metrics
+    metric_value: Optional[float] = None
+    threshold: Optional[float] = None
+
+    # For sign-offs
+    signed_by: Optional[str] = None
+    signed_at: Optional[datetime] = None
+
+    created_at: datetime = Field(default_factory=datetime.now)
+    updated_at: datetime = Field(default_factory=datetime.now)
+
+
+class PitstopCheckpoint(BaseModel):
+    """A pitstop meeting checkpoint between phases"""
+    id: str
+    project_id: str
+    phase_completed: PhaseType
+    status: PitstopStatus = PitstopStatus.PENDING
+
+    scheduled_date: Optional[datetime] = None
+    completed_date: Optional[datetime] = None
+
+    # Participants
+    pdpo_reviewer: Optional[str] = None  # Email
+    participants: List[str] = Field(default_factory=list)  # Emails
+
+    # Review items
+    evidence_reviewed: List[str] = Field(default_factory=list)  # Evidence IDs
+    issues_raised: List[str] = Field(default_factory=list)
+    action_items: List[str] = Field(default_factory=list)
+
+    # Decision
+    approved: bool = False
+    approval_notes: Optional[str] = None
+    approved_by: Optional[str] = None
+    approved_at: Optional[datetime] = None
+
+    # Notifications
+    notification_sent: bool = False
+    reminder_sent: bool = False
+
+
+class NEOMPhase(BaseModel):
+    """A phase in the NEOM Trustworthy AI process"""
+    id: str
+    project_id: str
+    phase_type: PhaseType
+    name: str
+    description: str
+    order: int
+
+    steps: List[ComplianceStep] = Field(default_factory=list)
+    evidence_collected: List[str] = Field(default_factory=list)  # Evidence IDs
+
+    status: StepStatus = StepStatus.NOT_STARTED
+    started_at: Optional[datetime] = None
+    completed_at: Optional[datetime] = None
+
+    pitstop_id: Optional[str] = None  # Links to pitstop checkpoint
+
+
+class NEOMProject(BaseModel):
+    """A NEOM Trustworthy AI project"""
+    project_id: str
+    project_name: str
+    description: Optional[str] = None
+
+    # Project metadata
+    ai_system_name: str
+    ai_system_purpose: str
+    risk_level: Optional[RiskLevel] = None
+
+    # Governance
+    raci_matrix: Optional[RACIMatrix] = None
+    project_lead: Optional[str] = None  # Email
+    pdpo_contact: Optional[str] = None  # Email
+
+    # Phases
+    phases: List[NEOMPhase] = Field(default_factory=list)
+    current_phase_index: int = 0
+
+    # Evidence & documents
+    evidence: List[Evidence] = Field(default_factory=list)
+    documents: List[Document] = Field(default_factory=list)
+
+    # Pitstops
+    pitstops: List[PitstopCheckpoint] = Field(default_factory=list)
+
+    # Timestamps
+    created_at: datetime = Field(default_factory=datetime.now)
+    updated_at: datetime = Field(default_factory=datetime.now)
+
+    # Status
+    overall_status: str = "initiated"  # initiated, in_progress, under_review, approved, deployed
+
+
+class TaskReference(BaseModel):
+    """Reference to a specific task in the Trustworthy AI Playbook"""
+    task_id: str  # e.g., "2.1", "3.5"
+    section: str  # e.g., "Data & Privacy", "Security"
+    description: str
+    phase: PhaseType
+    mandatory: bool = True
+    evidence_required: List[EvidenceType] = Field(default_factory=list)
