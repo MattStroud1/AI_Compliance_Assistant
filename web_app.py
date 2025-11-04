@@ -460,6 +460,11 @@ def show_welcome_page():
 
 def show_goal_setup_page():
     """Display goal setup page"""
+    # Return to home button
+    if st.button("🏠 Return to Home Page", key="home_goal_setup"):
+        st.session_state.current_page = "welcome"
+        st.rerun()
+
     st.title("Define Your Compliance Goal")
 
     pathway_type = st.session_state.selected_pathway
@@ -620,6 +625,11 @@ def show_goal_setup_page():
 
 def show_pathway_page():
     """Display pathway with steps"""
+    # Return to home button
+    if st.button("🏠 Return to Home Page", key="home_pathway"):
+        st.session_state.current_page = "welcome"
+        st.rerun()
+
     session = st.session_state.session
 
     st.title(f"{session.pathway_type.value.replace('_', ' ').title()} Pathway")
@@ -820,6 +830,11 @@ def show_pathway_page():
 
 def show_neom_project_init_page():
     """Display NEOM project initialization page"""
+    # Return to home button
+    if st.button("🏠 Return to Home Page", key="home_neom_init"):
+        st.session_state.current_page = "welcome"
+        st.rerun()
+
     st.title("🏗️ NEOM Trustworthy AI - Project Initialization")
 
     st.markdown("""
@@ -956,6 +971,11 @@ def show_neom_project_init_page():
 
 def show_neom_pathway_page():
     """Display NEOM pathway with phases and steps"""
+    # Return to home button
+    if st.button("🏠 Return to Home Page", key="home_neom_pathway"):
+        st.session_state.current_page = "welcome"
+        st.rerun()
+
     project = st.session_state.neom_project
 
     if not project:
@@ -1243,41 +1263,78 @@ def show_neom_raci_view(project: NEOMProject):
 
     # Define team members section
     st.markdown("---")
-    st.markdown("### 👥 Define Team Members")
-    st.markdown("Add team members and their roles to populate the RACI matrix below:")
+    st.markdown("### 👥 Define Team Members for RACI Roles")
+    st.markdown("Enter the name and email for each role in the RACI matrix:")
 
-    # Initialize team members in session state if not exists
-    if 'team_members' not in st.session_state:
-        st.session_state.team_members = []
+    # Initialize team members dict in session state if not exists
+    if 'raci_team_members' not in st.session_state:
+        st.session_state.raci_team_members = {}
 
-    with st.form("add_team_member"):
-        col1, col2, col3 = st.columns(3)
-        with col1:
-            role = st.text_input("Role", placeholder="e.g., AI Product Manager")
-        with col2:
-            name = st.text_input("Name", placeholder="e.g., John Doe")
-        with col3:
-            email = st.text_input("Email", placeholder="john.doe@example.com")
+    # Define the 7 RACI roles
+    raci_roles = [
+        "AI Product Manager",
+        "Data Scientist",
+        "Software Engineer",
+        "Compliance Officer / Legal Counsel",
+        "Data Privacy Officer",
+        "Risk Management Officer",
+        "Executive Sponsor"
+    ]
 
-        if st.form_submit_button("➕ Add Team Member", type="primary"):
-            if role and name and email:
-                st.session_state.team_members.append({"role": role, "name": name, "email": email})
-                st.success(f"✅ Added {name} as {role}")
+    with st.form("add_raci_team_members"):
+        st.markdown("**Fill in details for each RACI role:**")
+
+        for role in raci_roles:
+            st.markdown(f"**{role}**")
+            col1, col2 = st.columns(2)
+            with col1:
+                name = st.text_input(
+                    f"Name for {role}",
+                    value=st.session_state.raci_team_members.get(role, {}).get("name", ""),
+                    key=f"name_{role}",
+                    placeholder="e.g., John Doe"
+                )
+            with col2:
+                email = st.text_input(
+                    f"Email for {role}",
+                    value=st.session_state.raci_team_members.get(role, {}).get("email", ""),
+                    key=f"email_{role}",
+                    placeholder="john.doe@example.com"
+                )
+
+            # Store temporarily during form interaction
+            if role not in st.session_state.raci_team_members:
+                st.session_state.raci_team_members[role] = {}
+            if name or email:
+                st.session_state.raci_team_members[role] = {"name": name, "email": email}
+
+        if st.form_submit_button("💾 Save Team Members", type="primary"):
+            # Update all roles with form data
+            saved_count = 0
+            for role in raci_roles:
+                name = st.session_state.get(f"name_{role}", "")
+                email = st.session_state.get(f"email_{role}", "")
+                if name or email:
+                    st.session_state.raci_team_members[role] = {"name": name, "email": email}
+                    saved_count += 1
+
+            if saved_count > 0:
+                st.success(f"✅ Saved team member details for {saved_count} role(s)")
+                # Save project
+                st.session_state.storage_manager.save_project(project)
                 st.rerun()
             else:
-                st.error("Please fill in all fields")
+                st.warning("Please enter at least one team member")
 
-    # Display current team members
-    if st.session_state.team_members:
-        st.markdown("#### Current Team Members:")
-        for idx, member in enumerate(st.session_state.team_members):
-            col1, col2 = st.columns([4, 1])
-            with col1:
-                st.markdown(f"**{member['role']}**: {member['name']} ({member['email']})")
-            with col2:
-                if st.button("🗑️", key=f"remove_{idx}", help="Remove team member"):
-                    st.session_state.team_members.pop(idx)
-                    st.rerun()
+    # Display current team members summary
+    if st.session_state.raci_team_members:
+        st.markdown("#### Current RACI Team:")
+        assigned_roles = {role: info for role, info in st.session_state.raci_team_members.items() if info.get("name") or info.get("email")}
+        if assigned_roles:
+            for role, info in assigned_roles.items():
+                name = info.get("name", "Not assigned")
+                email = info.get("email", "No email")
+                st.markdown(f"**{role}**: {name} ({email})")
 
     # RACI Matrix
     st.markdown("---")
@@ -1443,19 +1500,75 @@ def show_neom_pitstops_view(project: NEOMProject):
 
                 with col2:
                     if st.button("❌ Raise Issues", key=f"issues_{pitstop.id}"):
-                        pitstop.status = PitstopStatus.ISSUES_RAISED
-
-                        # Send notification
-                        if st.session_state.get("email_notifications_enabled"):
-                            st.session_state.email_service.send_issues_notification(project, pitstop)
-
-                        st.warning("Issues raised. Team will be notified.")
+                        # Open issues log interface
+                        st.session_state[f"show_issues_log_{pitstop.id}"] = True
                         st.rerun()
 
-            if pitstop.issues_raised:
-                st.markdown("**Issues Raised:**")
-                for issue in pitstop.issues_raised:
-                    st.markdown(f"- {issue}")
+            # Issues Log Interface
+            if st.session_state.get(f"show_issues_log_{pitstop.id}", False) or pitstop.status == PitstopStatus.ISSUES_RAISED:
+                st.markdown("---")
+                st.markdown("### 📋 Issues Log")
+
+                # Display existing issues
+                if pitstop.issues_raised:
+                    st.markdown("**Current Issues:**")
+                    for idx, issue in enumerate(pitstop.issues_raised):
+                        col1, col2 = st.columns([5, 1])
+                        with col1:
+                            # Make issues editable
+                            edited_issue = st.text_area(
+                                f"Issue {idx + 1}",
+                                value=issue,
+                                key=f"edit_issue_{pitstop.id}_{idx}",
+                                height=80
+                            )
+                            if edited_issue != issue:
+                                pitstop.issues_raised[idx] = edited_issue
+                                st.session_state.storage_manager.save_project(project)
+                        with col2:
+                            if st.button("🗑️", key=f"delete_issue_{pitstop.id}_{idx}", help="Delete issue"):
+                                pitstop.issues_raised.pop(idx)
+                                st.session_state.storage_manager.save_project(project)
+                                st.rerun()
+                    st.markdown("---")
+
+                # Add new issue
+                st.markdown("**Add New Issue:**")
+                new_issue = st.text_area(
+                    "Describe the issue",
+                    key=f"new_issue_{pitstop.id}",
+                    placeholder="Describe the issue that needs to be addressed...",
+                    height=100
+                )
+
+                col1, col2, col3 = st.columns(3)
+                with col1:
+                    if st.button("➕ Add Issue", key=f"add_issue_{pitstop.id}", type="primary"):
+                        if new_issue.strip():
+                            pitstop.issues_raised.append(new_issue.strip())
+                            pitstop.status = PitstopStatus.ISSUES_RAISED
+
+                            # Send notification
+                            if st.session_state.get("email_notifications_enabled"):
+                                st.session_state.email_service.send_issues_notification(project, pitstop)
+
+                            st.session_state.storage_manager.save_project(project)
+                            st.success("✅ Issue added!")
+                            # Clear the new issue field
+                            del st.session_state[f"new_issue_{pitstop.id}"]
+                            st.rerun()
+                        else:
+                            st.error("Please enter an issue description")
+
+                with col2:
+                    if st.button("💾 Save All Changes", key=f"save_issues_{pitstop.id}"):
+                        st.session_state.storage_manager.save_project(project)
+                        st.success("✅ All changes saved!")
+
+                with col3:
+                    if st.button("✅ Close Issues Log", key=f"close_issues_{pitstop.id}"):
+                        st.session_state[f"show_issues_log_{pitstop.id}"] = False
+                        st.rerun()
 
             if pitstop.approval_notes:
                 st.markdown("**Notes:**")
