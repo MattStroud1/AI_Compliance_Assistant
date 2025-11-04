@@ -2,6 +2,7 @@
 
 import os
 import shutil
+import json
 from pathlib import Path
 from typing import Optional, List
 from datetime import datetime
@@ -263,3 +264,77 @@ class ProjectStorageManager:
             return True
 
         return False
+
+    def save_project(self, project: NEOMProject) -> Path:
+        """
+        Save NEOM project metadata to JSON file
+
+        Args:
+            project: NEOMProject instance to save
+
+        Returns:
+            Path to saved project file
+        """
+        project_path = self.base_path / project.project_id
+        project_path.mkdir(exist_ok=True, parents=True)
+
+        project_file = project_path / "project.json"
+        with open(project_file, 'w', encoding='utf-8') as f:
+            f.write(project.model_dump_json(indent=2))
+
+        return project_file
+
+    def load_project(self, project_id: str) -> Optional[NEOMProject]:
+        """
+        Load NEOM project from JSON file
+
+        Args:
+            project_id: Project identifier
+
+        Returns:
+            NEOMProject instance if found, None otherwise
+        """
+        project_file = self.base_path / project_id / "project.json"
+
+        if not project_file.exists():
+            return None
+
+        with open(project_file, 'r', encoding='utf-8') as f:
+            project_data = json.load(f)
+
+        return NEOMProject(**project_data)
+
+    def list_all_projects(self) -> List[dict]:
+        """
+        List all NEOM projects with basic metadata
+
+        Returns:
+            List of dictionaries with project info
+        """
+        projects = []
+
+        if not self.base_path.exists():
+            return projects
+
+        for project_dir in self.base_path.iterdir():
+            if project_dir.is_dir():
+                project_file = project_dir / "project.json"
+                if project_file.exists():
+                    try:
+                        with open(project_file, 'r', encoding='utf-8') as f:
+                            project_data = json.load(f)
+
+                        projects.append({
+                            "project_id": project_data.get("project_id"),
+                            "project_name": project_data.get("project_name"),
+                            "ai_system_name": project_data.get("ai_system_name"),
+                            "created_at": project_data.get("created_at"),
+                            "current_phase": project_data.get("current_phase")
+                        })
+                    except Exception:
+                        continue
+
+        # Sort by created_at descending (newest first)
+        projects.sort(key=lambda x: x.get("created_at", ""), reverse=True)
+
+        return projects

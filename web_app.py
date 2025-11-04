@@ -362,10 +362,46 @@ def show_welcome_page():
 
     This tool helps you navigate **EU AI Act** and **Saudi Arabian AI regulations**
     through specialized pathways tailored to your role and objectives.
-
-    **Choose your pathway below to get started:**
     """
     )
+
+    # Load existing project section
+    st.markdown("---")
+    st.markdown("### 📂 Load Existing Project")
+
+    existing_projects = st.session_state.storage_manager.list_all_projects()
+
+    if existing_projects:
+        project_options = {
+            f"{proj['project_name']} ({proj['ai_system_name']})": proj['project_id']
+            for proj in existing_projects
+        }
+        project_options = {"-- Select a project --": None, **project_options}
+
+        selected_project_display = st.selectbox(
+            "Choose an existing NEOM Building AI project:",
+            options=list(project_options.keys()),
+            key="existing_project_selector"
+        )
+
+        if selected_project_display and selected_project_display != "-- Select a project --":
+            project_id = project_options[selected_project_display]
+
+            if st.button("📂 Load Project", type="primary"):
+                loaded_project = st.session_state.storage_manager.load_project(project_id)
+                if loaded_project:
+                    st.session_state.neom_project = loaded_project
+                    st.session_state.current_page = "neom_pathway"
+                    st.success(f"✅ Loaded project: {loaded_project.project_name}")
+                    st.rerun()
+                else:
+                    st.error("Failed to load project")
+    else:
+        st.info("No existing projects found. Create a new project below.")
+
+    st.markdown("---")
+    st.markdown("### 🆕 Create New Project")
+    st.markdown("**Choose your pathway below to get started:**")
 
     # Pathway cards
     pathways = {
@@ -908,6 +944,9 @@ def show_neom_project_init_page():
                 st.session_state.neom_project = neom_project
                 st.session_state.email_notifications_enabled = email_notifications
 
+                # Save project to storage
+                st.session_state.storage_manager.save_project(neom_project)
+
                 st.success(f"✅ Project '{project_name}' created successfully!")
                 st.info(f"📁 Project ID: `{project_id}`")
 
@@ -988,7 +1027,6 @@ def show_neom_phases_view(project: NEOMProject):
 
                     with col1:
                         st.markdown(f"{step_status_emoji} **{step.title}**")
-                        st.caption(step.description)
 
                     with col2:
                         if step.status == StepStatus.NOT_STARTED:
@@ -998,6 +1036,10 @@ def show_neom_phases_view(project: NEOMProject):
 
                     # Show details if in progress
                     if step.status == StepStatus.IN_PROGRESS:
+                        # Display the regulatory requirement/control description
+                        if step.description:
+                            st.info(f"**Regulatory Requirement:**\n\n{step.description}")
+
                         st.markdown("**Checklist:**")
                         for item in step.checklist_items:
                             st.checkbox(item, key=f"check_{step.id}_{item[:30]}")
@@ -1013,10 +1055,6 @@ def show_neom_phases_view(project: NEOMProject):
                         # RAG-powered answer generation
                         if st.session_state.rag_system and st.session_state.rag_documents:
                             st.markdown("**🤖 AI-Assisted Completion:**")
-
-                            # Display the regulatory requirement/control description
-                            if step.description:
-                                st.info(f"**Regulatory Requirement:**\n\n{step.description}")
 
                             # Generate question based on step
                             question = f"{step.title}: {step.description}"
@@ -1133,6 +1171,10 @@ def show_neom_phases_view(project: NEOMProject):
                                         evidence.file_path = str(file_path)
 
                                     project.evidence.append(evidence)
+
+                                    # Auto-save project
+                                    st.session_state.storage_manager.save_project(project)
+
                                     st.success("✅ Answer and evidence saved successfully!")
 
                                     # Clear draft data after saving
@@ -1192,62 +1234,107 @@ def show_neom_raci_view(project: NEOMProject):
     st.markdown("### RACI Matrix")
 
     st.info("""
-    **RACI Roles:**
-    - **R** = Responsible (does the work)
-    - **A** = Accountable (makes decisions)
-    - **C** = Consulted (provides input)
-    - **I** = Informed (kept updated)
+    **RACI Definitions:**
+    - **Responsible (R)**: The individual(s) who perform the task or do the work. There can be multiple people responsible for a task.
+    - **Accountable (A)**: The one person who is answerable for the correct and thorough completion of the deliverable or task, and who approves the work. There must be only one "A" per task.
+    - **Consulted (C)**: People whose input and expertise are required before a decision is made or a task is completed (two-way communication).
+    - **Informed (I)**: People who are kept up-to-date on the progress or outcome of the task (one-way communication).
     """)
 
-    if project.raci_matrix and project.raci_matrix.entries:
-        for entry in project.raci_matrix.entries:
-            with st.expander(f"📌 {entry.task_name}", expanded=True):
-                col1, col2 = st.columns(2)
-
-                with col1:
-                    st.markdown(f"**Responsible:** {', '.join(entry.responsible) if entry.responsible else 'None'}")
-                    st.markdown(f"**Accountable:** {', '.join(entry.accountable) if entry.accountable else 'None'}")
-
-                with col2:
-                    st.markdown(f"**Consulted:** {', '.join(entry.consulted) if entry.consulted else 'None'}")
-                    st.markdown(f"**Informed:** {', '.join(entry.informed) if entry.informed else 'None'}")
-
-    # Add new RACI entry
+    # Define team members section
     st.markdown("---")
-    st.markdown("### Add New RACI Entry")
+    st.markdown("### 👥 Define Team Members")
+    st.markdown("Add team members and their roles to populate the RACI matrix below:")
 
-    with st.form("add_raci_entry"):
-        task_name = st.text_input("Task Name")
+    # Initialize team members in session state if not exists
+    if 'team_members' not in st.session_state:
+        st.session_state.team_members = []
 
-        col1, col2 = st.columns(2)
+    with st.form("add_team_member"):
+        col1, col2, col3 = st.columns(3)
         with col1:
-            responsible = st.text_input("Responsible (comma-separated emails)",
-                                       placeholder="user1@example.com, user2@example.com")
-            accountable = st.text_input("Accountable (comma-separated emails)",
-                                       placeholder="manager@example.com")
-
+            role = st.text_input("Role", placeholder="e.g., AI Product Manager")
         with col2:
-            consulted = st.text_input("Consulted (comma-separated emails)",
-                                     placeholder="advisor@example.com")
-            informed = st.text_input("Informed (comma-separated emails)",
-                                    placeholder="team@example.com")
+            name = st.text_input("Name", placeholder="e.g., John Doe")
+        with col3:
+            email = st.text_input("Email", placeholder="john.doe@example.com")
 
-        if st.form_submit_button("Add Entry", type="primary"):
-            if task_name and responsible and accountable:
-                new_entry = RACIEntry(
-                    task_name=task_name,
-                    responsible=[r.strip() for r in responsible.split(",")] if responsible else [],
-                    accountable=[a.strip() for a in accountable.split(",")] if accountable else [],
-                    consulted=[c.strip() for c in consulted.split(",")] if consulted else [],
-                    informed=[i.strip() for i in informed.split(",")] if informed else []
-                )
-
-                if not project.raci_matrix:
-                    project.raci_matrix = RACIMatrix(project_id=project.project_id, entries=[])
-
-                project.raci_matrix.entries.append(new_entry)
-                st.success("RACI entry added!")
+        if st.form_submit_button("➕ Add Team Member", type="primary"):
+            if role and name and email:
+                st.session_state.team_members.append({"role": role, "name": name, "email": email})
+                st.success(f"✅ Added {name} as {role}")
                 st.rerun()
+            else:
+                st.error("Please fill in all fields")
+
+    # Display current team members
+    if st.session_state.team_members:
+        st.markdown("#### Current Team Members:")
+        for idx, member in enumerate(st.session_state.team_members):
+            col1, col2 = st.columns([4, 1])
+            with col1:
+                st.markdown(f"**{member['role']}**: {member['name']} ({member['email']})")
+            with col2:
+                if st.button("🗑️", key=f"remove_{idx}", help="Remove team member"):
+                    st.session_state.team_members.pop(idx)
+                    st.rerun()
+
+    # RACI Matrix
+    st.markdown("---")
+    st.markdown("### 📊 Draft RACI Matrix for AI Compliance")
+
+    # Define the draft RACI matrix structure
+    raci_matrix_data = [
+        {"phase": "Project Initiation Phase", "tasks": [
+            {"task": "Define project scope and AI use case", "roles": {"AI Product Manager": "A", "Data Scientist": "R", "Software Engineer": "I", "Compliance Officer / Legal Counsel": "C", "Data Privacy Officer": "C", "Risk Management Officer": "C", "Executive Sponsor": "I"}},
+            {"task": "Identify relevant AI regulations (e.g., EU AI Act, data privacy laws)", "roles": {"AI Product Manager": "I", "Data Scientist": "I", "Software Engineer": "I", "Compliance Officer / Legal Counsel": "R", "Data Privacy Officer": "A", "Risk Management Officer": "C", "Executive Sponsor": "I"}},
+            {"task": "Conduct initial risk assessment and impact analysis", "roles": {"AI Product Manager": "A", "Data Scientist": "C", "Software Engineer": "R", "Compliance Officer / Legal Counsel": "C", "Data Privacy Officer": "R", "Risk Management Officer": "A", "Executive Sponsor": "I"}},
+            {"task": "Define ethical principles and guidelines for the project", "roles": {"AI Product Manager": "A", "Data Scientist": "C", "Software Engineer": "C", "Compliance Officer / Legal Counsel": "R", "Data Privacy Officer": "C", "Risk Management Officer": "C", "Executive Sponsor": "I"}},
+        ]},
+        {"phase": "Data Management Phase", "tasks": [
+            {"task": "Data collection and acquisition (ensuring legal basis)", "roles": {"AI Product Manager": "A", "Data Scientist": "R", "Software Engineer": "I", "Compliance Officer / Legal Counsel": "C", "Data Privacy Officer": "R", "Risk Management Officer": "C", "Executive Sponsor": "I"}},
+            {"task": "Data anonymization and de-identification", "roles": {"AI Product Manager": "I", "Data Scientist": "R", "Software Engineer": "R", "Compliance Officer / Legal Counsel": "I", "Data Privacy Officer": "A", "Risk Management Officer": "C", "Executive Sponsor": "I"}},
+            {"task": "Data quality and bias assessment", "roles": {"AI Product Manager": "A", "Data Scientist": "R", "Software Engineer": "C", "Compliance Officer / Legal Counsel": "I", "Data Privacy Officer": "C", "Risk Management Officer": "R", "Executive Sponsor": "I"}},
+            {"task": "Data documentation and lineage tracking", "roles": {"AI Product Manager": "A", "Data Scientist": "R", "Software Engineer": "R", "Compliance Officer / Legal Counsel": "C", "Data Privacy Officer": "C", "Risk Management Officer": "R", "Executive Sponsor": "I"}},
+        ]},
+        {"phase": "Model Development Phase", "tasks": [
+            {"task": "Model training and testing", "roles": {"AI Product Manager": "A", "Data Scientist": "R", "Software Engineer": "R", "Compliance Officer / Legal Counsel": "I", "Data Privacy Officer": "I", "Risk Management Officer": "C", "Executive Sponsor": "I"}},
+            {"task": "Model validation (performance, fairness, robustness)", "roles": {"AI Product Manager": "A", "Data Scientist": "C", "Software Engineer": "R", "Compliance Officer / Legal Counsel": "C", "Data Privacy Officer": "C", "Risk Management Officer": "R", "Executive Sponsor": "I"}},
+            {"task": "Documentation of model methodology and decisions", "roles": {"AI Product Manager": "A", "Data Scientist": "R", "Software Engineer": "C", "Compliance Officer / Legal Counsel": "R", "Data Privacy Officer": "I", "Risk Management Officer": "C", "Executive Sponsor": "I"}},
+            {"task": "Peer review and internal audit of the model", "roles": {"AI Product Manager": "I", "Data Scientist": "C", "Software Engineer": "I", "Compliance Officer / Legal Counsel": "R", "Data Privacy Officer": "C", "Risk Management Officer": "A", "Executive Sponsor": "I"}},
+        ]},
+        {"phase": "Deployment & Operations Phase", "tasks": [
+            {"task": "Model deployment to production environment", "roles": {"AI Product Manager": "A", "Data Scientist": "I", "Software Engineer": "R", "Compliance Officer / Legal Counsel": "I", "Data Privacy Officer": "I", "Risk Management Officer": "C", "Executive Sponsor": "I"}},
+            {"task": "Continuous monitoring of model performance and compliance", "roles": {"AI Product Manager": "A", "Data Scientist": "R", "Software Engineer": "R", "Compliance Officer / Legal Counsel": "R", "Data Privacy Officer": "C", "Risk Management Officer": "A", "Executive Sponsor": "I"}},
+            {"task": "Incident response plan for model failure or bias incidents", "roles": {"AI Product Manager": "A", "Data Scientist": "C", "Software Engineer": "R", "Compliance Officer / Legal Counsel": "C", "Data Privacy Officer": "R", "Risk Management Officer": "A", "Executive Sponsor": "I"}},
+            {"task": "Regulatory reporting and external audits", "roles": {"AI Product Manager": "I", "Data Scientist": "I", "Software Engineer": "I", "Compliance Officer / Legal Counsel": "R", "Data Privacy Officer": "A", "Risk Management Officer": "C", "Executive Sponsor": "A"}},
+        ]},
+        {"phase": "In-Live Monitoring Phase", "tasks": [
+            {"task": "Establish real-time performance and drift monitoring", "roles": {"AI Product Manager": "A", "Data Scientist": "R", "Software Engineer": "R", "Compliance Officer / Legal Counsel": "C", "Data Privacy Officer": "I", "Risk Management Officer": "A", "Executive Sponsor": "I"}},
+            {"task": "Implement human-in-the-loop/oversight protocols", "roles": {"AI Product Manager": "A", "Data Scientist": "I", "Software Engineer": "C", "Compliance Officer / Legal Counsel": "R", "Data Privacy Officer": "C", "Risk Management Officer": "A", "Executive Sponsor": "I"}},
+            {"task": "Monitor adherence to model explainability requirements", "roles": {"AI Product Manager": "A", "Data Scientist": "R", "Software Engineer": "I", "Compliance Officer / Legal Counsel": "R", "Data Privacy Officer": "C", "Risk Management Officer": "C", "Executive Sponsor": "I"}},
+            {"task": "Trigger alerts for potential compliance breaches/bias incidents", "roles": {"AI Product Manager": "A", "Data Scientist": "C", "Software Engineer": "R", "Compliance Officer / Legal Counsel": "R", "Data Privacy Officer": "C", "Risk Management Officer": "A", "Executive Sponsor": "I"}},
+        ]},
+    ]
+
+    # Display RACI matrix by phase
+    for phase_data in raci_matrix_data:
+        with st.expander(f"📋 {phase_data['phase']}", expanded=True):
+            # Create header row
+            roles = ["AI Product Manager", "Data Scientist", "Software Engineer", "Compliance Officer / Legal Counsel", "Data Privacy Officer", "Risk Management Officer", "Executive Sponsor"]
+
+            # Display as a table
+            for task_data in phase_data['tasks']:
+                st.markdown(f"**{task_data['task']}**")
+
+                cols = st.columns(len(roles))
+                for idx, role in enumerate(roles):
+                    with cols[idx]:
+                        raci_value = task_data['roles'].get(role, "")
+                        color = {"R": "🔵", "A": "🟢", "C": "🟡", "I": "⚪"}.get(raci_value, "")
+                        st.markdown(f"<div style='text-align: center'><small>{role}</small><br/><b style='font-size: 1.5em'>{color} {raci_value}</b></div>", unsafe_allow_html=True)
+
+                st.markdown("---")
 
 
 def show_neom_evidence_view(project: NEOMProject):
