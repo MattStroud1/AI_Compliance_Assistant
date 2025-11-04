@@ -324,7 +324,7 @@ with st.sidebar:
                         if evidence.file_path:
                             st.caption(f"📎 File: {evidence.file_path}")
 
-                        st.caption(f"🕒 Saved: {evidence.timestamp}")
+                        st.caption(f"🕒 Saved: {evidence.created_at.strftime('%Y-%m-%d %H:%M')}")
         else:
             st.caption("No answers saved yet")
 
