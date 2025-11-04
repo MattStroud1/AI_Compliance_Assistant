@@ -1292,7 +1292,7 @@ def show_neom_evidence_view(project: NEOMProject):
                     if evidence.signed_by:
                         st.markdown(f"**Signed by:** {evidence.signed_by}")
 
-                    st.markdown(f"**Created:** {evidence.timestamp}")
+                    st.markdown(f"**Created:** {evidence.created_at}")
 
 
 def show_neom_pitstops_view(project: NEOMProject):
