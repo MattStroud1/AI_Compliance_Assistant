@@ -44,6 +44,7 @@ from src.pathways.procuring import ProcuringAIPathway
 from src.pathways.operating import OperatingAIPathway
 from src.pathways.training import TrainingOnAIPathway
 from src.pathways.neom_building_updated import NEOMBuildingAIPathway
+from src.pathways.neom_procuring_updated import NEOMProcuringAIPathway
 from src.storage.project_storage import ProjectStorageManager
 from src.notifications.email_service import EmailService
 from src.rag.document_rag import DocumentRAG
@@ -412,11 +413,11 @@ def show_welcome_page():
             "description": "Comprehensive 4-phase journey for building trustworthy AI systems with evidence collection, RACI management, and pitstop checkpoints",
             "page": "neom_project_init",
         },
-        PathwayType.PROCURING: {
+        "neom_procuring": {
             "icon": "🛒",
             "title": "Procuring AI",
-            "description": "For organizations purchasing AI solutions",
-            "page": "setup_goal",
+            "description": "Comprehensive procurement assessment for purchasing AI solutions with 7 compliance frameworks",
+            "page": "neom_procuring_init",
         },
         PathwayType.OPERATING: {
             "icon": "⚙️",
@@ -1731,6 +1732,176 @@ def show_project_dashboard():
         st.metric("🔴 Not Started", not_started_phases)
 
 
+def show_neom_procuring_init_page():
+    """Display NEOM Procuring AI project initialization page"""
+    # Return to home button
+    if st.button("🏠 Return to Home Page", key="home_neom_procuring_init"):
+        st.session_state.current_page = "welcome"
+        st.rerun()
+
+    st.title("🛒 NEOM Procuring AI - Project Initialization")
+
+    st.markdown("""
+    ### Create Your AI Procurement Assessment
+
+    This comprehensive pathway guides you through **7 compliance frameworks** for AI procurement:
+    1. 📋 **Project Setup & Assessment** - Initial requirements and vendor evaluation
+    2. 🔒 **Privacy & Data Governance** - Data protection and privacy controls
+    3. 🛡️ **Security Framework** - Cybersecurity and infrastructure assessment
+    4. ⚖️ **Fairness & Risk Mitigation** - Bias testing and fairness measures
+    5. 💡 **Explainability Framework** - Transparency and explainability requirements
+    6. 🔧 **Technology Development & Robustness** - Technical validation and testing
+    7. 📊 **Post-Market Monitoring** - Ongoing monitoring and compliance
+
+    Each framework includes detailed assessment questions for vendor evaluation.
+    """)
+
+    st.markdown("---")
+    st.subheader("Project Information")
+
+    with st.form("neom_procuring_form"):
+        project_name = st.text_input(
+            "Project Name *",
+            placeholder="e.g., AI Chatbot Procurement Assessment",
+            help="Internal name for tracking this procurement project"
+        )
+
+        ai_system_name = st.text_input(
+            "AI System Name *",
+            placeholder="e.g., Vendor SmartBot Solution",
+            help="Name of the AI system being evaluated for procurement"
+        )
+
+        ai_system_purpose = st.text_area(
+            "AI System Purpose *",
+            placeholder="Describe the intended use and business requirements...",
+            height=100,
+            help="Clear description of what the AI system will be used for"
+        )
+
+        st.markdown("### RACI Matrix Setup")
+        st.markdown("Define key stakeholders for procurement assessment")
+
+        col1, col2 = st.columns(2)
+
+        with col1:
+            project_lead_name = st.text_input("Procurement Lead Name *")
+            project_lead_email = st.text_input("Procurement Lead Email *")
+
+        with col2:
+            pdpo_name = st.text_input("PDPO Reviewer Name *")
+            pdpo_email = st.text_input("PDPO Reviewer Email *")
+
+        st.markdown("### Notification Settings")
+        email_notifications = st.checkbox(
+            "Enable email notifications for review checkpoints",
+            value=True,
+            help="Send notifications when assessment milestones are reached"
+        )
+
+        col1, col2 = st.columns([1, 1])
+
+        with col1:
+            if st.form_submit_button("← Back", use_container_width=True):
+                st.session_state.current_page = "welcome"
+                st.rerun()
+
+        with col2:
+            submit = st.form_submit_button("Create Project →", type="primary", use_container_width=True)
+
+        if submit:
+            if not all([project_name, ai_system_name, ai_system_purpose,
+                       project_lead_name, project_lead_email, pdpo_name, pdpo_email]):
+                st.error("Please fill in all required fields marked with *")
+            else:
+                # Create NEOM procurement project
+                project_id = str(uuid.uuid4())
+
+                # Create project folder structure
+                st.session_state.storage_manager.create_project_folder(project_id)
+
+                # Initialize RACI matrix
+                raci_matrix = RACIMatrix(
+                    project_id=project_id,
+                    entries=[
+                        RACIEntry(
+                            task_name="Overall Procurement Assessment",
+                            responsible=[project_lead_email],
+                            accountable=[project_lead_email],
+                            consulted=[pdpo_email],
+                            informed=[]
+                        )
+                    ]
+                )
+
+                # Create NEOM procurement project
+                neom_project = NEOMProject(
+                    project_id=project_id,
+                    project_name=project_name,
+                    ai_system_name=ai_system_name,
+                    ai_system_purpose=ai_system_purpose,
+                    raci_matrix=raci_matrix,
+                    phases=[],
+                    evidence=[],
+                    pitstops=[]
+                )
+
+                # Initialize procurement pathway and phases
+                pathway = NEOMProcuringAIPathway()
+                phases = pathway.create_phases(project_id)
+                neom_project.phases = phases
+
+                # Store in session
+                st.session_state.neom_project = neom_project
+                st.session_state.email_notifications_enabled = email_notifications
+
+                # Save project to storage
+                st.session_state.storage_manager.save_project(neom_project)
+
+                st.success(f"✅ Procurement project '{project_name}' created successfully!")
+                st.info(f"📁 Project ID: `{project_id}`")
+
+                st.session_state.current_page = "neom_procuring_pathway"
+                st.rerun()
+
+
+def show_neom_procuring_pathway_page():
+    """Display NEOM Procuring AI pathway with compliance frameworks"""
+    # Return to home button
+    if st.button("🏠 Return to Home Page", key="home_neom_procuring_pathway"):
+        st.session_state.current_page = "welcome"
+        st.rerun()
+
+    project = st.session_state.neom_project
+
+    if not project:
+        st.error("No procurement project found. Please create a project first.")
+        if st.button("← Back to Home"):
+            st.session_state.current_page = "welcome"
+            st.rerun()
+        return
+
+    # Header
+    st.title(f"🛒 {project.project_name}")
+    st.markdown(f"**AI System:** {project.ai_system_name}")
+    st.markdown(f"**Purpose:** {project.ai_system_purpose}")
+
+    # Tabs for different views
+    tab1, tab2, tab3, tab4 = st.tabs(["📋 Compliance Frameworks", "👥 RACI Matrix", "📄 Evidence", "🔍 Checkpoints"])
+
+    with tab1:
+        show_neom_phases_view(project)
+
+    with tab2:
+        show_neom_raci_view(project)
+
+    with tab3:
+        show_neom_evidence_view(project)
+
+    with tab4:
+        show_neom_pitstops_view(project)
+
+
 # Main app logic
 def main():
     """Main application logic"""
@@ -1744,6 +1915,10 @@ def main():
         show_neom_project_init_page()
     elif st.session_state.current_page == "neom_pathway":
         show_neom_pathway_page()
+    elif st.session_state.current_page == "neom_procuring_init":
+        show_neom_procuring_init_page()
+    elif st.session_state.current_page == "neom_procuring_pathway":
+        show_neom_procuring_pathway_page()
     elif st.session_state.current_page == "project_dashboard":
         show_project_dashboard()
 

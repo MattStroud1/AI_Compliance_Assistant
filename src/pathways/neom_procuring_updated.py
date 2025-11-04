@@ -554,7 +554,7 @@ class NEOMProcuringAIPathway:
         )
 
     def _get_fairness_steps_part1(self) -> List[ComplianceStep]:
-        """Helper method for fairness steps part 1"""
+        """Helper method for fairness steps - all fairness and bias questions"""
         return [
             ComplianceStep(
                 id=str(uuid.uuid4()),
@@ -670,6 +670,206 @@ class NEOMProcuringAIPathway:
                     "Identify post-market risks",
                     "Consider vulnerable groups",
                     "Document all findings"
+                ],
+                status=StepStatus.NOT_STARTED
+            ),
+            # Bias identification questions (Q49-Q54)
+            ComplianceStep(
+                id=str(uuid.uuid4()),
+                title="Selection Bias Identification",
+                description="Identify and document sources of selection bias. Selection bias occurs when your data isn't representative of the population due to sampling issues. Justify why you think your data sample is representative of the total population of measurements, and if it isn't, explain what impact on the model this bias will have.",
+                checklist_items=[
+                    "Analyze sampling methodology",
+                    "Compare sample to population",
+                    "Identify selection biases",
+                    "Document representativeness",
+                    "Assess impact on model"
+                ],
+                status=StepStatus.NOT_STARTED
+            ),
+            ComplianceStep(
+                id=str(uuid.uuid4()),
+                title="Historical Bias Identification",
+                description="Identify and document sources of historical bias. Historical bias occurs when the population has changed since the data was sampled. Justify why you think your sample is representative of the current population, and if it isn't, explain what impact on the model this bias will have.",
+                checklist_items=[
+                    "Analyze data collection timing",
+                    "Assess population changes",
+                    "Identify historical biases",
+                    "Document temporal relevance",
+                    "Assess impact on model"
+                ],
+                status=StepStatus.NOT_STARTED
+            ),
+            ComplianceStep(
+                id=str(uuid.uuid4()),
+                title="Survivor Bias Identification",
+                description="Identify and document sources of Survivor bias. The data sample differs from the population because some members survive longer and so are more likely to be sampled. Justify why you think your sample is not subject to survivor bias, and if it is, explain what impact on the model this bias will have.",
+                checklist_items=[
+                    "Analyze survival effects",
+                    "Identify survivor biases",
+                    "Document sampling duration effects",
+                    "Assess representativeness",
+                    "Assess impact on model"
+                ],
+                status=StepStatus.NOT_STARTED
+            ),
+            ComplianceStep(
+                id=str(uuid.uuid4()),
+                title="Availability Bias Identification",
+                description="Identify and document sources of Availability bias. The data available does not statistically reflect the population being modelled. Consider whether data is available that truly reflects the population you are trying to model. Please describe what coverage limitations exist in your data (e.g., Your model is applied to all of Saudi Arabia, but data was only available from one province).",
+                checklist_items=[
+                    "Analyze data coverage",
+                    "Identify geographic limitations",
+                    "Identify demographic limitations",
+                    "Document availability biases",
+                    "Assess impact on model"
+                ],
+                status=StepStatus.NOT_STARTED
+            ),
+            ComplianceStep(
+                id=str(uuid.uuid4()),
+                title="Outlier Bias Identification",
+                description="Identify and document sources of Outlier bias. The population has regions dominated by outliers, which region averages fail to capture and leads to inaccuracies. Justify and document why you think your sample is not subject to outlier bias, and if it is, explain what impact on the model this bias will have.",
+                checklist_items=[
+                    "Analyze data distribution",
+                    "Identify outlier-dominated regions",
+                    "Document outlier treatment",
+                    "Assess representativeness",
+                    "Assess impact on model"
+                ],
+                status=StepStatus.NOT_STARTED
+            ),
+            ComplianceStep(
+                id=str(uuid.uuid4()),
+                title="Evaluation Bias Identification",
+                description="Identify and document sources of Evaluation bias. The target evaluation dataset is not appropriate for the population (e.g., image recognition AI trained to recognise white faces and applied to a mixed ethnicity population). Justify and document why you think your sample is not subject to evaluation bias, and if it is, explain what impact on the model this bias will have.",
+                checklist_items=[
+                    "Analyze evaluation data",
+                    "Compare to target population",
+                    "Identify evaluation biases",
+                    "Document appropriateness",
+                    "Assess impact on model"
+                ],
+                status=StepStatus.NOT_STARTED
+            ),
+            # Bias correction and fairness measures (Q55-Q65)
+            ComplianceStep(
+                id=str(uuid.uuid4()),
+                title="Dataset Bias Correction",
+                description="Explain how you have corrected for the sources of weakness and bias in the dataset. Document any additional data you have acquired to mitigate the issues identified and/or new approaches to sampling the population.",
+                checklist_items=[
+                    "Document correction methods",
+                    "Describe additional data acquired",
+                    "Explain sampling improvements",
+                    "Validate corrections",
+                    "Measure improvement"
+                ],
+                status=StepStatus.NOT_STARTED
+            ),
+            ComplianceStep(
+                id=str(uuid.uuid4()),
+                title="Feature Selection Fairness Impact",
+                description="Analyse and document the impact of your choice of feature selection on fairness. Document why you believe your selection of model data features were no worse and ideally better than your alternative possible choices, in creating a final model that was free of bias and functions in a safe and fair manner.",
+                checklist_items=[
+                    "Document feature selection process",
+                    "Compare alternative features",
+                    "Analyze fairness implications",
+                    "Justify feature choices",
+                    "Validate fairness impact"
+                ],
+                status=StepStatus.NOT_STARTED
+            ),
+            ComplianceStep(
+                id=str(uuid.uuid4()),
+                title="Champion Model Selection Fairness Impact",
+                description="Analyse and document the impact of your choice of champion selection on fairness. Document why you believe your selection of the champion model was no worse and ideally better than your alternative possible choices, in creating a final model that was free of bias and functions in a safe and fair manner.",
+                checklist_items=[
+                    "Document model selection process",
+                    "Compare alternative models",
+                    "Analyze fairness implications",
+                    "Justify model choice",
+                    "Validate fairness impact"
+                ],
+                status=StepStatus.NOT_STARTED
+            ),
+            ComplianceStep(
+                id=str(uuid.uuid4()),
+                title="Develop Fairness Metrics & Thresholds",
+                description="Evidence that you have developed Fairness Metrics and defined their acceptable thresholds. Step 1: Define end user segments of groups at risk of discrimination. Step 2: Express model output quantitatively (e.g., sentiment analysis for natural language). Step 3: Define acceptable variability between at-risk segments and population average, set as threshold. Step 4: Create such metrics and thresholds for different parameters characterizing model output.",
+                checklist_items=[
+                    "Define at-risk user segments",
+                    "Quantify model outputs",
+                    "Define acceptable thresholds",
+                    "Create fairness metrics",
+                    "Document metric definitions"
+                ],
+                status=StepStatus.NOT_STARTED
+            ),
+            ComplianceStep(
+                id=str(uuid.uuid4()),
+                title="Feature & Model Choice Impact on Metrics",
+                description="Evidence the impact of your choice of feature selection and champion model on the fairness metrics. Referencing the fairness metrics defined previously, analyse and document the impact of your choices of features and champion models on the fairness metrics.",
+                checklist_items=[
+                    "Measure metrics for chosen features",
+                    "Measure metrics for champion model",
+                    "Compare to alternatives",
+                    "Document impact analysis",
+                    "Validate metric compliance"
+                ],
+                status=StepStatus.NOT_STARTED
+            ),
+            # Mitigation measures (Q61-Q63)
+            ComplianceStep(
+                id=str(uuid.uuid4()),
+                title="Process Measures for Risk Control",
+                description="Design and document your process measures to control the risks identified in the preceding fairness and risk tasks. Describe design changes made to mitigate risks. Where risks cannot be removed by design, describe what controls, human oversight and training you have put in place to manage those risks.",
+                checklist_items=[
+                    "Document design changes",
+                    "Describe control measures",
+                    "Define human oversight procedures",
+                    "Design training programs",
+                    "Validate control effectiveness"
+                ],
+                status=StepStatus.NOT_STARTED
+            ),
+            ComplianceStep(
+                id=str(uuid.uuid4()),
+                title="Human Oversight Tools & Processes",
+                description="Describe the tools and process you have designed to enable human oversight. Describe how humans will have effective oversight of the AI system - what tools will you give the human operator to help them monitor and understand the system's output? How is the human operator empowered to intervene in the event they detect anomalous or risky processing?",
+                checklist_items=[
+                    "Design monitoring tools",
+                    "Define oversight procedures",
+                    "Enable intervention mechanisms",
+                    "Document operator empowerment",
+                    "Validate oversight effectiveness"
+                ],
+                status=StepStatus.NOT_STARTED
+            ),
+            ComplianceStep(
+                id=str(uuid.uuid4()),
+                title="Risk Mitigation & Residual Risk Estimation",
+                description="Document your risk mitigation steps & estimate the residual risk and justify why you think it is at an acceptable level. For each risk: Step 1) Estimate impact on individual (1-10), Step 2) Estimate users impacted (1-10), Step 3) Calculate risk without mitigation, Step 4) Describe all mitigating measures, Step 5) Recalculate residual risk with mitigation.",
+                checklist_items=[
+                    "List all mitigation measures",
+                    "Estimate individual impact (1-10)",
+                    "Estimate users affected (1-10)",
+                    "Calculate unmitigated risk",
+                    "Calculate residual risk",
+                    "Justify acceptability"
+                ],
+                status=StepStatus.NOT_STARTED
+            ),
+            # Validation (Q64, Q66)
+            ComplianceStep(
+                id=str(uuid.uuid4()),
+                title="Validate Fairness Metrics",
+                description="Validate that the fairness metrics are within the defined thresholds. Based on the AI model validation data set, document your validation process to test whether the fairness metrics are below their thresholds and record the outcome.",
+                checklist_items=[
+                    "Test metrics against thresholds",
+                    "Document validation methodology",
+                    "Record test results",
+                    "Identify any exceedances",
+                    "Document remediation if needed"
                 ],
                 status=StepStatus.NOT_STARTED
             ),
