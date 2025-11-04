@@ -368,13 +368,6 @@ def show_welcome_page():
     # Load all existing projects once
     existing_projects = st.session_state.storage_manager.list_all_projects()
 
-    # Project Dashboard Link
-    if existing_projects:
-        st.markdown("---")
-        if st.button("📊 View All Projects Dashboard", type="primary", use_container_width=True):
-            st.session_state.current_page = "project_dashboard"
-            st.rerun()
-
     # Load existing project section
     st.markdown("---")
     st.markdown("### 📂 Load Existing Project")
@@ -464,6 +457,13 @@ def show_welcome_page():
     - **Training on AI**: Learning about AI compliance requirements
     """
     )
+
+    # Project Dashboard Link at bottom
+    if existing_projects:
+        st.markdown("---")
+        if st.button("📊 View All Projects Dashboard", type="primary", use_container_width=True):
+            st.session_state.current_page = "project_dashboard"
+            st.rerun()
 
 
 def show_goal_setup_page():
