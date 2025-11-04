@@ -1000,19 +1000,44 @@ def show_neom_pathway_page():
     st.markdown(f"**AI System:** {project.ai_system_name}")
     st.markdown(f"**Purpose:** {project.ai_system_purpose}")
 
-    # Tabs for different views
-    tab1, tab2, tab3, tab4 = st.tabs(["📋 Phases & Steps", "👥 RACI Matrix", "📄 Evidence", "🔍 Pitstops"])
+    # Navigation buttons instead of tabs
+    if 'neom_view' not in st.session_state:
+        st.session_state.neom_view = "phases"
 
-    with tab1:
+    st.markdown("---")
+    col1, col2, col3 = st.columns(3)
+
+    with col1:
+        if st.button("📋 Phases & Steps", use_container_width=True,
+                    type="primary" if st.session_state.neom_view == "phases" else "secondary",
+                    key="nav_phases_building"):
+            st.session_state.neom_view = "phases"
+            st.rerun()
+
+    with col2:
+        if st.button("📄 Evidence", use_container_width=True,
+                    type="primary" if st.session_state.neom_view == "evidence" else "secondary",
+                    key="nav_evidence_building"):
+            st.session_state.neom_view = "evidence"
+            st.rerun()
+
+    with col3:
+        if st.button("🔍 Pitstops", use_container_width=True,
+                    type="primary" if st.session_state.neom_view == "pitstops" else "secondary",
+                    key="nav_pitstops_building"):
+            st.session_state.neom_view = "pitstops"
+            st.rerun()
+
+    st.markdown("---")
+
+    # Show appropriate view
+    if st.session_state.neom_view == "phases":
         show_neom_phases_view(project)
-
-    with tab2:
+    elif st.session_state.neom_view == "raci":
         show_neom_raci_view(project)
-
-    with tab3:
+    elif st.session_state.neom_view == "evidence":
         show_neom_evidence_view(project)
-
-    with tab4:
+    elif st.session_state.neom_view == "pitstops":
         show_neom_pitstops_view(project)
 
 
@@ -1073,6 +1098,19 @@ def show_neom_phases_view(project: NEOMProject):
                         st.markdown("**Checklist:**")
                         for item in step.checklist_items:
                             st.checkbox(item, key=f"check_{step.id}_{item[:30]}")
+
+                        # Check if this is a RACI-related question
+                        if "RACI" in step.title or "raci" in step.title.lower():
+                            st.markdown("---")
+                            st.info("💡 This question requires you to create or update the RACI matrix")
+                            if st.button("📊 Go to RACI Matrix", key=f"goto_raci_{step.id}", type="primary"):
+                                # Store where we came from
+                                st.session_state.raci_return_step_id = step.id
+                                st.session_state.raci_return_step_title = step.title
+                                # Navigate to RACI view
+                                st.session_state.neom_view = "raci"
+                                st.rerun()
+                            st.markdown("---")
 
                         # Evidence collection
                         st.markdown("**📎 Collect Evidence:**")
@@ -1402,6 +1440,19 @@ def show_neom_raci_view(project: NEOMProject):
                         st.markdown(f"<div style='text-align: center'><small>{role}</small><br/><b style='font-size: 1.5em'>{color} {raci_value}</b></div>", unsafe_allow_html=True)
 
                 st.markdown("---")
+
+    # Return button if we came from a specific step
+    if 'raci_return_step_id' in st.session_state and 'raci_return_step_title' in st.session_state:
+        st.markdown("---")
+        st.markdown("---")
+        if st.button(f"⬅️ Return to: {st.session_state.raci_return_step_title}",
+                    type="primary", use_container_width=True, key="return_from_raci"):
+            # Clear the return context
+            del st.session_state.raci_return_step_id
+            del st.session_state.raci_return_step_title
+            # Navigate back to phases view
+            st.session_state.neom_view = "phases"
+            st.rerun()
 
 
 def show_neom_evidence_view(project: NEOMProject):
@@ -1887,19 +1938,44 @@ def show_neom_procuring_pathway_page():
     st.markdown(f"**AI System:** {project.ai_system_name}")
     st.markdown(f"**Purpose:** {project.ai_system_purpose}")
 
-    # Tabs for different views
-    tab1, tab2, tab3, tab4 = st.tabs(["📋 Compliance Frameworks", "👥 RACI Matrix", "📄 Evidence", "🔍 Checkpoints"])
+    # Navigation buttons instead of tabs
+    if 'neom_view' not in st.session_state:
+        st.session_state.neom_view = "phases"
 
-    with tab1:
+    st.markdown("---")
+    col1, col2, col3 = st.columns(3)
+
+    with col1:
+        if st.button("📋 Compliance Frameworks", use_container_width=True,
+                    type="primary" if st.session_state.neom_view == "phases" else "secondary",
+                    key="nav_phases_procuring"):
+            st.session_state.neom_view = "phases"
+            st.rerun()
+
+    with col2:
+        if st.button("📄 Evidence", use_container_width=True,
+                    type="primary" if st.session_state.neom_view == "evidence" else "secondary",
+                    key="nav_evidence_procuring"):
+            st.session_state.neom_view = "evidence"
+            st.rerun()
+
+    with col3:
+        if st.button("🔍 Checkpoints", use_container_width=True,
+                    type="primary" if st.session_state.neom_view == "pitstops" else "secondary",
+                    key="nav_pitstops_procuring"):
+            st.session_state.neom_view = "pitstops"
+            st.rerun()
+
+    st.markdown("---")
+
+    # Show appropriate view
+    if st.session_state.neom_view == "phases":
         show_neom_phases_view(project)
-
-    with tab2:
+    elif st.session_state.neom_view == "raci":
         show_neom_raci_view(project)
-
-    with tab3:
+    elif st.session_state.neom_view == "evidence":
         show_neom_evidence_view(project)
-
-    with tab4:
+    elif st.session_state.neom_view == "pitstops":
         show_neom_pitstops_view(project)
 
 
@@ -2057,19 +2133,44 @@ def show_neom_operating_pathway_page():
     st.markdown(f"**AI System:** {project.ai_system_name}")
     st.markdown(f"**Purpose:** {project.ai_system_purpose}")
 
-    # Tabs for different views
-    tab1, tab2, tab3, tab4 = st.tabs(["📋 Monitoring Frameworks", "👥 RACI Matrix", "📄 Evidence", "🔍 Checkpoints"])
+    # Navigation buttons instead of tabs
+    if 'neom_view' not in st.session_state:
+        st.session_state.neom_view = "phases"
 
-    with tab1:
+    st.markdown("---")
+    col1, col2, col3 = st.columns(3)
+
+    with col1:
+        if st.button("📋 Monitoring Frameworks", use_container_width=True,
+                    type="primary" if st.session_state.neom_view == "phases" else "secondary",
+                    key="nav_phases_operating"):
+            st.session_state.neom_view = "phases"
+            st.rerun()
+
+    with col2:
+        if st.button("📄 Evidence", use_container_width=True,
+                    type="primary" if st.session_state.neom_view == "evidence" else "secondary",
+                    key="nav_evidence_operating"):
+            st.session_state.neom_view = "evidence"
+            st.rerun()
+
+    with col3:
+        if st.button("🔍 Checkpoints", use_container_width=True,
+                    type="primary" if st.session_state.neom_view == "pitstops" else "secondary",
+                    key="nav_pitstops_operating"):
+            st.session_state.neom_view = "pitstops"
+            st.rerun()
+
+    st.markdown("---")
+
+    # Show appropriate view
+    if st.session_state.neom_view == "phases":
         show_neom_phases_view(project)
-
-    with tab2:
+    elif st.session_state.neom_view == "raci":
         show_neom_raci_view(project)
-
-    with tab3:
+    elif st.session_state.neom_view == "evidence":
         show_neom_evidence_view(project)
-
-    with tab4:
+    elif st.session_state.neom_view == "pitstops":
         show_neom_pitstops_view(project)
 
 
