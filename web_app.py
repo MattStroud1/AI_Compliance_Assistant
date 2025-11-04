@@ -365,11 +365,19 @@ def show_welcome_page():
     """
     )
 
+    # Load all existing projects once
+    existing_projects = st.session_state.storage_manager.list_all_projects()
+
+    # Project Dashboard Link
+    if existing_projects:
+        st.markdown("---")
+        if st.button("📊 View All Projects Dashboard", type="primary", use_container_width=True):
+            st.session_state.current_page = "project_dashboard"
+            st.rerun()
+
     # Load existing project section
     st.markdown("---")
     st.markdown("### 📂 Load Existing Project")
-
-    existing_projects = st.session_state.storage_manager.list_all_projects()
 
     if existing_projects:
         project_options = {
@@ -1575,6 +1583,154 @@ def show_neom_pitstops_view(project: NEOMProject):
                 st.text_area("", value=pitstop.approval_notes, key=f"notes_{pitstop.id}", disabled=True)
 
 
+def show_project_dashboard():
+    """Display project dashboard with status matrix"""
+    # Return to home button
+    if st.button("🏠 Return to Home Page", key="home_dashboard"):
+        st.session_state.current_page = "welcome"
+        st.rerun()
+
+    st.title("📊 All Projects Dashboard")
+    st.markdown("Overview of all NEOM Trustworthy AI projects and their progress")
+
+    # Load all projects
+    project_list = st.session_state.storage_manager.list_all_projects()
+
+    if not project_list:
+        st.info("No projects found. Create a new project to get started!")
+        return
+
+    st.markdown(f"**Total Projects:** {len(project_list)}")
+    st.markdown("---")
+
+    # Define phase names and colors
+    phase_names = {
+        PhaseType.PLANNING_DESIGN: "Planning & Design",
+        PhaseType.DATA_PREPARATION: "Data Preparation",
+        PhaseType.BUILD_VALIDATE: "Build & Validate",
+        PhaseType.DEPLOYMENT_MONITORING: "Deployment & Monitoring"
+    }
+
+    # Create header row
+    st.markdown("### Project Status Matrix")
+    st.markdown("🔴 Not Started | 🟠 In Progress | 🟢 Completed")
+    st.markdown("---")
+
+    # Create table header
+    header_cols = st.columns([3, 2, 2, 2, 2])
+    with header_cols[0]:
+        st.markdown("**Project Name**")
+    with header_cols[1]:
+        st.markdown("**Planning & Design**")
+    with header_cols[2]:
+        st.markdown("**Data Preparation**")
+    with header_cols[3]:
+        st.markdown("**Build & Validate**")
+    with header_cols[4]:
+        st.markdown("**Deployment & Monitoring**")
+
+    st.markdown("---")
+
+    # Process each project
+    for proj_info in project_list:
+        project = st.session_state.storage_manager.load_project(proj_info['project_id'])
+
+        if not project:
+            continue
+
+        # Create row
+        cols = st.columns([3, 2, 2, 2, 2])
+
+        with cols[0]:
+            # Make project name clickable
+            if st.button(f"📁 {project.project_name}", key=f"proj_{project.project_id}", use_container_width=True):
+                st.session_state.neom_project = project
+                st.session_state.current_page = "neom_pathway"
+                st.rerun()
+            st.caption(f"{project.ai_system_name}")
+
+        # Calculate status for each phase
+        phase_order = [
+            PhaseType.PLANNING_DESIGN,
+            PhaseType.DATA_PREPARATION,
+            PhaseType.BUILD_VALIDATE,
+            PhaseType.DEPLOYMENT_MONITORING
+        ]
+
+        for idx, phase_type in enumerate(phase_order):
+            # Find the phase in the project
+            phase = next((p for p in project.phases if p.phase_type == phase_type), None)
+
+            if not phase or not phase.steps:
+                # No phase or steps - red
+                status_circle = "🔴"
+                status_text = "Not Started"
+            else:
+                # Calculate completion
+                total_steps = len(phase.steps)
+                completed_steps = sum(1 for step in phase.steps if step.status == StepStatus.COMPLETED)
+                in_progress_steps = sum(1 for step in phase.steps if step.status == StepStatus.IN_PROGRESS)
+
+                if completed_steps == total_steps and total_steps > 0:
+                    # All completed - green
+                    status_circle = "🟢"
+                    status_text = f"Completed ({completed_steps}/{total_steps})"
+                elif completed_steps > 0 or in_progress_steps > 0:
+                    # Some progress - orange
+                    status_circle = "🟠"
+                    status_text = f"In Progress ({completed_steps}/{total_steps})"
+                else:
+                    # Not started - red
+                    status_circle = "🔴"
+                    status_text = f"Not Started (0/{total_steps})"
+
+            with cols[idx + 1]:
+                st.markdown(f"<div style='text-align: center; font-size: 2em'>{status_circle}</div>", unsafe_allow_html=True)
+                st.caption(status_text)
+
+        st.markdown("---")
+
+    # Summary statistics
+    st.markdown("### Summary")
+
+    # Calculate overall statistics
+    total_phases = 0
+    completed_phases = 0
+    in_progress_phases = 0
+    not_started_phases = 0
+
+    for proj_info in project_list:
+        project = st.session_state.storage_manager.load_project(proj_info['project_id'])
+        if not project:
+            continue
+
+        for phase in project.phases:
+            total_phases += 1
+            if phase.steps:
+                total_steps = len(phase.steps)
+                completed_steps = sum(1 for step in phase.steps if step.status == StepStatus.COMPLETED)
+                in_progress_steps = sum(1 for step in phase.steps if step.status == StepStatus.IN_PROGRESS)
+
+                if completed_steps == total_steps and total_steps > 0:
+                    completed_phases += 1
+                elif completed_steps > 0 or in_progress_steps > 0:
+                    in_progress_phases += 1
+                else:
+                    not_started_phases += 1
+            else:
+                not_started_phases += 1
+
+    col1, col2, col3, col4 = st.columns(4)
+    with col1:
+        st.metric("Total Phases", total_phases)
+    with col2:
+        st.metric("🟢 Completed", completed_phases)
+    with col3:
+        st.metric("🟠 In Progress", in_progress_phases)
+    with col4:
+        st.metric("🔴 Not Started", not_started_phases)
+
+
 # Main app logic
 def main():
     """Main application logic"""
@@ -1588,6 +1744,8 @@ def main():
         show_neom_project_init_page()
     elif st.session_state.current_page == "neom_pathway":
         show_neom_pathway_page()
+    elif st.session_state.current_page == "project_dashboard":
+        show_project_dashboard()
 
 
 if __name__ == "__main__":
