@@ -38,6 +38,23 @@ class NEOMProcuringAIPathway:
             ComplianceStep(
                 id=str(uuid.uuid4()),
                 order=1,
+                title="Create Project RACI",
+                description="Create a RACI for your project and document each individual's sign-off agreeing to participate in the project in that capacity. This should include the procure, integrate and operate phases. The RACI matrix establishes clear roles and responsibilities for AI procurement governance.",
+                checklist_items=[
+                    "Click 'Go to RACI Matrix' button below to open the RACI page",
+                    "Define team members for each of the 7 key roles",
+                    "Create RACI matrix for procure phase",
+                    "Create RACI matrix for integrate phase",
+                    "Create RACI matrix for operate phase",
+                    "Obtain sign-off from all participants",
+                    "Document all commitments",
+                    "Return here to mark this step complete"
+                ],
+                status=StepStatus.NOT_STARTED
+            ),
+            ComplianceStep(
+                id=str(uuid.uuid4()),
+                order=2,
                 title="Name of Project",
                 description="Please put the official name, so the AI can be easily tracked over time",
                 checklist_items=[
@@ -156,20 +173,6 @@ class NEOMProcuringAIPathway:
                     "Set target deployment date",
                     "Document approval dependencies",
                     "Plan timeline milestones"
-                ],
-                status=StepStatus.NOT_STARTED
-            ),
-            ComplianceStep(
-                id=str(uuid.uuid4()),
-                order=11,
-                title="Create Project RACI",
-                description="Create a RACI for your project and document each individual's sign-off agreeing to participate in the project in that capacity. This should include the procure, integrate and operate phases. See the 'Trustworthy AI Toolbox' for a template RACI which you can edit and adapt to your project.",
-                checklist_items=[
-                    "Create RACI matrix for procure phase",
-                    "Create RACI matrix for integrate phase",
-                    "Create RACI matrix for operate phase",
-                    "Obtain sign-off from all participants",
-                    "Document all commitments"
                 ],
                 status=StepStatus.NOT_STARTED
             ),

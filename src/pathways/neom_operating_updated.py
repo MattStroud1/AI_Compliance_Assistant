@@ -45,6 +45,22 @@ class NEOMOperatingAIPathway:
             ComplianceStep(
                 id=str(uuid.uuid4()),
                 order=1,
+                title="Review and Update RACI Matrix",
+                description="Review your existing RACI matrix and update it for the operational monitoring phase. The RACI matrix should reflect current roles and responsibilities for monitoring, maintaining, and governing the operational AI system.",
+                checklist_items=[
+                    "Click 'Go to RACI Matrix' button below to open the RACI page",
+                    "Review existing RACI team members",
+                    "Update roles if personnel have changed",
+                    "Verify operational monitoring responsibilities are clear",
+                    "Ensure governance structure is up to date",
+                    "Obtain sign-off from all participants",
+                    "Return here to mark this step complete"
+                ],
+                status=StepStatus.NOT_STARTED
+            ),
+            ComplianceStep(
+                id=str(uuid.uuid4()),
+                order=3,
                 title="Name of Project",
                 description="Please put the official name, so the AI can be easily tracked over time",
                 checklist_items=[
@@ -56,7 +72,7 @@ class NEOMOperatingAIPathway:
             ),
             ComplianceStep(
                 id=str(uuid.uuid4()),
-                order=2,
+                order=3,
                 title="Name of AI System Owner",
                 description="Please put the name of the business lead who is sponsoring the project",
                 checklist_items=[
@@ -68,7 +84,7 @@ class NEOMOperatingAIPathway:
             ),
             ComplianceStep(
                 id=str(uuid.uuid4()),
-                order=3,
+                order=4,
                 title="Business Unit / NEOM Entity",
                 description="Please put your legal entity name",
                 checklist_items=[
@@ -80,7 +96,7 @@ class NEOMOperatingAIPathway:
             ),
             ComplianceStep(
                 id=str(uuid.uuid4()),
-                order=4,
+                order=5,
                 title="Assessment Completion Details",
                 description="Please enter details of who completed, reviewed, and signed-off this assessment",
                 checklist_items=[
@@ -93,7 +109,7 @@ class NEOMOperatingAIPathway:
             ),
             ComplianceStep(
                 id=str(uuid.uuid4()),
-                order=5,
+                order=6,
                 title="System Deployment Form Changes",
                 description="Has the form your AI system will be deployed into the market changed? Your description should be a paragraph or two and include: The type of AI used, whether it is a cloud service or part of a product, its broader context.",
                 checklist_items=[
@@ -107,7 +123,7 @@ class NEOMOperatingAIPathway:
             ),
             ComplianceStep(
                 id=str(uuid.uuid4()),
-                order=6,
+                order=7,
                 title="Project Purpose Changes",
                 description="Has the purpose of your project changed? Your description should encompass both the aims of the deploying entity and of the end user - what benefits each derives from using your AI system.",
                 checklist_items=[
@@ -121,7 +137,7 @@ class NEOMOperatingAIPathway:
             ),
             ComplianceStep(
                 id=str(uuid.uuid4()),
-                order=7,
+                order=8,
                 title="Use Case Changes",
                 description="Have the intended use cases for the AI system changed? If there are multiple use cases which are materially the same, group them into a 'class' of use cases.",
                 checklist_items=[
@@ -135,7 +151,7 @@ class NEOMOperatingAIPathway:
             ),
             ComplianceStep(
                 id=str(uuid.uuid4()),
-                order=8,
+                order=9,
                 title="Geographic & Language Changes",
                 description="Have the geographies and languages in which it will be deployed changed? The geographic description should be at the level of country or region. Languages should include official and significant minority languages.",
                 checklist_items=[
@@ -149,7 +165,7 @@ class NEOMOperatingAIPathway:
             ),
             ComplianceStep(
                 id=str(uuid.uuid4()),
-                order=9,
+                order=10,
                 title="Stakeholder Changes",
                 description="Have the types of individuals who will use the AI system & other stakeholders changed? Please identify different groups, segment them, and describe each segment noting vulnerabilities and potential for misuse.",
                 checklist_items=[
@@ -162,20 +178,6 @@ class NEOMOperatingAIPathway:
                 ],
                 status=StepStatus.NOT_STARTED
             ),
-            ComplianceStep(
-                id=str(uuid.uuid4()),
-                order=10,
-                title="RACI Matrix Updates",
-                description="Has your RACI changed? If so please attach an updated version. See the 'Trustworthy AI Toolbox' for a template RACI which you can edit and adapt to your project.",
-                checklist_items=[
-                    "Review current RACI matrix",
-                    "Compare to pre-launch RACI",
-                    "Document any role changes",
-                    "Obtain sign-off from new participants",
-                    "Update RACI documentation"
-                ],
-                status=StepStatus.NOT_STARTED
-            ),
         ]
 
         return NEOMPhase(
@@ -184,7 +186,7 @@ class NEOMOperatingAIPathway:
             phase_type=PhaseType.PLANNING_DESIGN,
             name="Project Setup & Documentation",
             description="Review and update project documentation and governance for operational AI system",
-            order=1,
+            order=2,
             steps=steps
         )
 

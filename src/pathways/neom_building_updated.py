@@ -54,10 +54,24 @@ class NEOMBuildingAIPathway:
         """Phase 1: Planning & Design (Tasks 3.1-3.40)"""
 
         steps = [
+            # RACI Creation - First Step
+            self._create_step(
+                project_id, PhaseType.PLANNING_DESIGN, 1, "1.1",                "Create Project RACI Matrix",
+                "Create a RACI matrix for your AI project to establish clear roles and responsibilities. The RACI matrix defines who is Responsible, Accountable, Consulted, and Informed for each key task. This ensures proper governance and accountability throughout the AI development lifecycle.",
+                [
+                    "Click 'Go to RACI Matrix' button below to open the RACI page",
+                    "Define team members for each of the 7 key roles",
+                    "Review the draft RACI matrix showing task assignments",
+                    "Ensure each task has exactly one Accountable person",
+                    "Verify all team members understand their roles",
+                    "Obtain sign-off from all participants",
+                    "Return here to mark this step complete"
+                ]
+            ),
+
             # Privacy & Data Governance Framework
             self._create_step(
-                project_id, PhaseType.PLANNING_DESIGN, 1, "3.1",
-                "High Risk Data Processing Assessment",
+                project_id, PhaseType.PLANNING_DESIGN, 2, "3.1",                "High Risk Data Processing Assessment",
                 "Does your processing of personal data fall into any of the categories in 'LIST 1' on the introduction Tab? Further, are you processing sensitive data or that relating to children or other vulnerable groups? If so, describe the data, how it is processed and explain why this is necessary.",
                 [
                     "Review LIST 1 categories for high-risk processing",
@@ -71,8 +85,7 @@ class NEOMBuildingAIPathway:
             ),
 
             self._create_step(
-                project_id, PhaseType.PLANNING_DESIGN, 2, "3.2",
-                "Risk Level Decision and Justification",
+                project_id, PhaseType.PLANNING_DESIGN, 3, "3.2",                "Risk Level Decision and Justification",
                 "Decide if the data processing is high risk and justify this decision. See the 'introduction tab' for a definition of high risk data processing. Describe the high level risks associated with your data processing and why this does or does not meet the threshold of high-risk processing. Then select the categorization toggle on the 'introduction tab' to present the right questions for you on this worksheet. Please find guidance from the EU here: https://ec.europa.eu/newsroom/just/document.cfm?doc_id=47711",
                 [
                     "Review EU definition of high-risk data processing",
@@ -85,8 +98,7 @@ class NEOMBuildingAIPathway:
             ),
 
             self._create_step(
-                project_id, PhaseType.PLANNING_DESIGN, 3, "3.3",
-                "Legal Basis for Data Processing",
+                project_id, PhaseType.PLANNING_DESIGN, 4, "3.3",                "Legal Basis for Data Processing",
                 "Decide the legal basis upon which you will process the data and document the logic of that decision. The legal basis could be legitimate interest, contract, consent or other. Please see the ICO for guidance (https://ico.org.uk/for-organisations/uk-gdpr-guidance-and-resources/lawful-basis/a-guide-to-lawful-basis/) and then consult with the DPO if necessary. Document the logic of your decision to justify your choice of legal basis.",
                 [
                     "Review ICO guidance on lawful basis options",
@@ -99,8 +111,7 @@ class NEOMBuildingAIPathway:
             ),
 
             self._create_step(
-                project_id, PhaseType.PLANNING_DESIGN, 4, "3.4",
-                "Features Supporting Legal Basis",
+                project_id, PhaseType.PLANNING_DESIGN, 5, "3.4",                "Features Supporting Legal Basis",
                 "Design and describe any features needed to support the chosen legal basis for the data processing. Analyze, define and document what features, such as consent requests, privacy notices, contract clauses, are needed to enact your chosen legal basis.",
                 [
                     "Analyze what features are required for chosen legal basis",
@@ -113,8 +124,7 @@ class NEOMBuildingAIPathway:
             ),
 
             self._create_step(
-                project_id, PhaseType.PLANNING_DESIGN, 5, "3.5",
-                "Privacy Risk Analysis",
+                project_id, PhaseType.PLANNING_DESIGN, 6, "3.5",                "Privacy Risk Analysis",
                 "Analyze and document any privacy risks that may result from your data processing activities. This should include both the risks arising in the normal use of your AI system and in foreseeable cases of misuse. Please consider these for each segment of end user. Consider the potential impact on individuals and any harm or damage your processing may cause – whether physical, emotional or material.",
                 [
                     "Analyze privacy risks in normal AI system use",
@@ -135,8 +145,7 @@ class NEOMBuildingAIPathway:
             ),
 
             self._create_step(
-                project_id, PhaseType.PLANNING_DESIGN, 6, "3.6",
-                "Dataset Combination Risks",
+                project_id, PhaseType.PLANNING_DESIGN, 7, "3.6",                "Dataset Combination Risks",
                 "Document any additional risks arising from combining datasets. If datasets are to be combined, describe what risks arise of individuals becoming identifiable and what new insights might become derivable about individuals. Give consideration to how these risks dependent on the complexity of deriving such insights.",
                 [
                     "Identify which datasets will be combined",
@@ -149,8 +158,7 @@ class NEOMBuildingAIPathway:
             ),
 
             self._create_step(
-                project_id, PhaseType.PLANNING_DESIGN, 7, "3.7",
-                "Privacy Enhancing Technologies (PETs) Justification",
+                project_id, PhaseType.PLANNING_DESIGN, 8, "3.7",                "Privacy Enhancing Technologies (PETs) Justification",
                 "Explain why you did or did not use PET's in your design. Describe the opportunities you identified to use PETs in your design, what benefits they could bring, and what issues. Conclude by describing what you chose to implement in your design.",
                 [
                     "Identify opportunities to use PETs (encryption, anonymization, etc.)",
@@ -163,8 +171,7 @@ class NEOMBuildingAIPathway:
             ),
 
             self._create_step(
-                project_id, PhaseType.PLANNING_DESIGN, 8, "3.8",
-                "Privacy by Design Justification",
+                project_id, PhaseType.PLANNING_DESIGN, 9, "3.8",                "Privacy by Design Justification",
                 "Justify that your design and operational processes embody privacy by design. Justify that you are using the minimum data required to achieve the purpose and that you are employing anonymization and PETs where possible. Explain how you have informed users about the data processing and whether you've given them the appropriate controls. Explain how you will ensure that the data is protected by adequate cyber-security. Justify any default settings. Describe the organizational process which will ensure your business adheres to this approach.",
                 [
                     "Justify use of minimum data required for purpose (data minimization)",
@@ -181,8 +188,7 @@ class NEOMBuildingAIPathway:
             ),
 
             self._create_step(
-                project_id, PhaseType.PLANNING_DESIGN, 9, "3.9",
-                "Residual Privacy Risk Estimation",
+                project_id, PhaseType.PLANNING_DESIGN, 10, "3.9",                "Residual Privacy Risk Estimation",
                 "Describe any other remediation steps you have taken to mitigate the privacy risks identified and estimate the residual risk. Your analysis should proceed through steps: 1) Estimate the impact of each risk on an individual affected, 2) Estimate the number of users potentially impacted, 3) The resulting level of risk without mitigation, 4) Describe all mitigating measures, 5) Repeat steps 2,3,4 to find the residual risk with mitigation.",
                 [
                     "Document additional privacy risk mitigation measures not mentioned in 3.6-3.8",
@@ -197,8 +203,7 @@ class NEOMBuildingAIPathway:
             ),
 
             self._create_step(
-                project_id, PhaseType.PLANNING_DESIGN, 10, "3.10",
-                "Risk-Benefit Balance Justification",
+                project_id, PhaseType.PLANNING_DESIGN, 11, "3.10",                "Risk-Benefit Balance Justification",
                 "Justify why the benefits of the proposed data processing outweigh the residual risk. Your answer should take the form of a balance test, weighing the residual risk against the benefits to the end user and other stakeholders - including wider society.",
                 [
                     "Document benefits to end users",
@@ -212,8 +217,7 @@ class NEOMBuildingAIPathway:
             ),
 
             self._create_step(
-                project_id, PhaseType.PLANNING_DESIGN, 11, "3.11",
-                "Compliance Officer Sign-off for High-Risk Systems",
+                project_id, PhaseType.PLANNING_DESIGN, 12, "3.11",                "Compliance Officer Sign-off for High-Risk Systems",
                 "If AI system is potentially high risk to individuals, then get sign-off from Compliance Officer. This can be done in the PITSTOP with the PDPO at the end of the Plan and Design phase.",
                 [
                     "Review if AI system falls into high-risk categories",
@@ -226,8 +230,7 @@ class NEOMBuildingAIPathway:
 
             # Security Governance Framework
             self._create_step(
-                project_id, PhaseType.PLANNING_DESIGN, 12, "3.12",
-                "Security Methodology Documentation",
+                project_id, PhaseType.PLANNING_DESIGN, 13, "3.12",                "Security Methodology Documentation",
                 "Document your Security methodology to prevent the AI system being hacked and how you will apply it. Document how do you plan to implement an appropriate security standard embodying a methodology which is endorsed by NEOM CISO; for example ISO 27001. Check with CISO that they agree you are following an appropriate standard.",
                 [
                     "Select appropriate security standard (e.g., ISO 27001)",
@@ -240,8 +243,7 @@ class NEOMBuildingAIPathway:
             ),
 
             self._create_step(
-                project_id, PhaseType.PLANNING_DESIGN, 13, "3.13",
-                "Security Design Features",
+                project_id, PhaseType.PLANNING_DESIGN, 14, "3.13",                "Security Design Features",
                 "Describe the features of the AI system's design that make it robust to being hacked. Describe your AI system's security features, such as perimeter security measures, network anomaly monitoring etc, and how they interact to create a robust security posture.",
                 [
                     "Document perimeter security measures",
@@ -255,8 +257,7 @@ class NEOMBuildingAIPathway:
             ),
 
             self._create_step(
-                project_id, PhaseType.PLANNING_DESIGN, 14, "3.14",
-                "AI Algorithm Security Analysis",
+                project_id, PhaseType.PLANNING_DESIGN, 15, "3.14",                "AI Algorithm Security Analysis",
                 "Write up security aspects of your choice of AI algorithm & what security vulnerabilities might arise as a result. Document why you chose your AI approach and algorithm, and the security implications of that choice. What attack vectors does the choice open up?",
                 [
                     "Document chosen AI algorithm/approach",
@@ -270,8 +271,7 @@ class NEOMBuildingAIPathway:
             ),
 
             self._create_step(
-                project_id, PhaseType.PLANNING_DESIGN, 15, "3.15",
-                "Adversarial Attack Prevention Measures",
+                project_id, PhaseType.PLANNING_DESIGN, 16, "3.15",                "Adversarial Attack Prevention Measures",
                 "Describe the measures taken to prevent adversarial attacks and other input manipulation techniques. These can be used to manipulate the functioning and output of the AI system using the input data consumed by the AI system during its operational life. Describe how you used tools to test for adversarial weaknesses and describe what steps you have taken to harden your model and mitigate these risks.",
                 [
                     "Identify potential adversarial attack vectors",
@@ -285,8 +285,7 @@ class NEOMBuildingAIPathway:
             ),
 
             self._create_step(
-                project_id, PhaseType.PLANNING_DESIGN, 16, "3.16",
-                "Data Poisoning Prevention Measures",
+                project_id, PhaseType.PLANNING_DESIGN, 17, "3.16",                "Data Poisoning Prevention Measures",
                 "Describe the measures taken to prevent data poisoning attacks. These can be used to manipulate the functioning and output of the AI system using the input data consumed by the AI system during the training phase of its build. Describe the measures you have put in place to mitigate the risks of such attacks.",
                 [
                     "Describe data quality and integrity measures from data creation to custody",
@@ -300,8 +299,7 @@ class NEOMBuildingAIPathway:
             ),
 
             self._create_step(
-                project_id, PhaseType.PLANNING_DESIGN, 17, "3.17",
-                "Model Inversion Attack Prevention",
+                project_id, PhaseType.PLANNING_DESIGN, 18, "3.17",                "Model Inversion Attack Prevention",
                 "Describe the measures taken to prevent model inversion attacks and other learning transfer attacks. This is where the attacker can build up a picture of the model's training data based on the model outputs. Your response should include how you are controlling the model outputs and how you will monitor model queries.",
                 [
                     "Describe how model access to sensitive data is limited",
@@ -315,8 +313,7 @@ class NEOMBuildingAIPathway:
             ),
 
             self._create_step(
-                project_id, PhaseType.PLANNING_DESIGN, 18, "3.18",
-                "Residual Security Risk Assessment",
+                project_id, PhaseType.PLANNING_DESIGN, 19, "3.18",                "Residual Security Risk Assessment",
                 "Given the security measures implemented, what residual risks do you foresee; how have you mitigated them and what is the residual risk. Justify why further risk mitigation steps were not taken. Your answer should include six steps: 1) Identify the risks, 2) estimate their impact on an individual affected, 3) estimate the percentage of users potentially impacted, 4) estimate the resulting level of risk without mitigating measures, 5) describe your mitigating measures, 6) repeat steps 2,3,4 to find the residual risk.",
                 [
                     "Identify all security risks",
@@ -333,8 +330,7 @@ class NEOMBuildingAIPathway:
 
             # Fairness & Risk Mitigation Framework
             self._create_step(
-                project_id, PhaseType.PLANNING_DESIGN, 19, "3.19",
-                "Human Rights and Cultural Values Alignment",
+                project_id, PhaseType.PLANNING_DESIGN, 20, "3.19",                "Human Rights and Cultural Values Alignment",
                 "Analyze and document how the AI system will align to human rights and cultural values. Document your analysis of the diversity of user segments and the range of contexts in which they'd use your AI system. Justify why you think that the benefits of the proposed AI system to the users and wider society will outweigh any harm to the users' human rights and society's cultural values.",
                 [
                     "Analyze diversity of user segments",
@@ -349,8 +345,7 @@ class NEOMBuildingAIPathway:
             ),
 
             self._create_step(
-                project_id, PhaseType.PLANNING_DESIGN, 20, "3.20",
-                "Societal and Environmental Impact",
+                project_id, PhaseType.PLANNING_DESIGN, 21, "3.20",                "Societal and Environmental Impact",
                 "Describe and document how your design choices impact society and the environment, including explaining how you are minimizing resource usage. Your description should include at least; an estimate the resource impact of your chosen design on the environment. Repeat this estimate for the next best design. If the next best design had less environmental impact, justify why you chose a design with a greater impact.",
                 [
                     "Estimate resource impact (electricity, etc.) of chosen design",
@@ -365,8 +360,7 @@ class NEOMBuildingAIPathway:
             ),
 
             self._create_step(
-                project_id, PhaseType.PLANNING_DESIGN, 21, "3.21",
-                "Legal and Ethical Data Acquisition",
+                project_id, PhaseType.PLANNING_DESIGN, 22, "3.21",                "Legal and Ethical Data Acquisition",
                 "Evidence that any data used or to be used was acquired legally and ethically - including not breaching copyright. The ethical test should include documenting your justification of why you believe a typical end user would feel processing their sensitive data in the planned way would be fair, reasonable and in their best interests.",
                 [
                     "Document data sources and acquisition methods",
@@ -381,8 +375,7 @@ class NEOMBuildingAIPathway:
             ),
 
             self._create_step(
-                project_id, PhaseType.PLANNING_DESIGN, 22, "3.22",
-                "Fairness Issues Identification",
+                project_id, PhaseType.PLANNING_DESIGN, 23, "3.22",                "Fairness Issues Identification",
                 "Identify and estimate any other fairness issues that may arise in the AI system life cycle and document the analysis. Building on Task 3.19, identify and document any fairness risks in the model's build, validate, deploy and post-market life-cycle phases. Include consideration of whether children or other vulnerable groups may be at risk.",
                 [
                     "Build on Task 3.19 analysis",
@@ -398,8 +391,7 @@ class NEOMBuildingAIPathway:
             ),
 
             self._create_step(
-                project_id, PhaseType.PLANNING_DESIGN, 23, "3.23",
-                "Fairness Issues from Errors and Misuse",
+                project_id, PhaseType.PLANNING_DESIGN, 24, "3.23",                "Fairness Issues from Errors and Misuse",
                 "Identify and estimate any fairness issues that may arise in the AI system life cycle from foreseeable errors or misuse. Foreseeable errors might include the input of default data settings such as '999' or '0000'. Whereas foreseeable misuse might include the AI model being used in common contexts for which it is not designed.",
                 [
                     "Identify foreseeable input errors (defaults, null values, etc.)",
@@ -414,8 +406,7 @@ class NEOMBuildingAIPathway:
             ),
 
             self._create_step(
-                project_id, PhaseType.PLANNING_DESIGN, 24, "3.24",
-                "Biased Feedback Loop Risk",
+                project_id, PhaseType.PLANNING_DESIGN, 25, "3.24",                "Biased Feedback Loop Risk",
                 "Identify and estimate any fairness issues that may arise in the AI system life cycle from biased feedback loops developing and document the analysis. Where AI models continue to learn during their in-life operation, feedback loops may develop because the model's previous predictions shape its future predictions.",
                 [
                     "Determine if model continues learning post-deployment",
@@ -430,8 +421,7 @@ class NEOMBuildingAIPathway:
             ),
 
             self._create_step(
-                project_id, PhaseType.PLANNING_DESIGN, 25, "3.25",
-                "Risk Control Process Design",
+                project_id, PhaseType.PLANNING_DESIGN, 26, "3.25",                "Risk Control Process Design",
                 "Design and document your process measures to control the risks identified in the preceding Tasks 3.19-3.24. Describe the changes to the design you have made to mitigate the risks identified. Where risks cannot be removed by design changes, describe what controls, human oversight and training you have put in place to manage those risks.",
                 [
                     "Review all risks from Tasks 3.19-3.24",
@@ -445,8 +435,7 @@ class NEOMBuildingAIPathway:
             ),
 
             self._create_step(
-                project_id, PhaseType.PLANNING_DESIGN, 26, "3.26",
-                "Human Oversight Tools and Processes",
+                project_id, PhaseType.PLANNING_DESIGN, 27, "3.26",                "Human Oversight Tools and Processes",
                 "Describe the tools and process you have designed to enable human oversight. Describe how humans will have effective oversight of the AI system - what tools will you give the human operator to help them monitor and understand the system's output? How is the human operator empowered to intervene in the event they detect anomalous or risky processing?",
                 [
                     "Document tools provided to human operators for monitoring",
@@ -460,8 +449,7 @@ class NEOMBuildingAIPathway:
             ),
 
             self._create_step(
-                project_id, PhaseType.PLANNING_DESIGN, 27, "3.27",
-                "Residual Risk Estimation and Justification",
+                project_id, PhaseType.PLANNING_DESIGN, 28, "3.27",                "Residual Risk Estimation and Justification",
                 "Document your risk mitigation steps & estimate the residual risk and justify why you think it is at an acceptable level. Your analysis should proceed through steps: 1) Estimate the impact of each risk on an individual affected, 2) Estimate the number of users potentially impacted, 3) The resulting level of risk without mitigation, 4) Describe all mitigating measures, 5) Repeat to find the residual risk with mitigation.",
                 [
                     "Review all risks from Tasks 3.19-3.24",
@@ -476,8 +464,7 @@ class NEOMBuildingAIPathway:
             ),
 
             self._create_step(
-                project_id, PhaseType.PLANNING_DESIGN, 28, "3.28",
-                "Fairness Metrics and Thresholds Development",
+                project_id, PhaseType.PLANNING_DESIGN, 29, "3.28",                "Fairness Metrics and Thresholds Development",
                 "Evidence that you have developed Fairness Metrics and defined their acceptable thresholds. Step 1: Define end user segments at risk of discrimination. Step 2: Express the model output in a quantitative form. Step 3: Define what degree of variability is acceptable between the segments and set this as the acceptable threshold. Step 4: Create metrics and thresholds for different parameters.",
                 [
                     "Define user segments/groups at risk of discrimination",
@@ -491,8 +478,7 @@ class NEOMBuildingAIPathway:
             ),
 
             self._create_step(
-                project_id, PhaseType.PLANNING_DESIGN, 29, "3.29",
-                "Automated Decision Harm Prevention",
+                project_id, PhaseType.PLANNING_DESIGN, 30, "3.29",                "Automated Decision Harm Prevention",
                 "Document mechanisms to prevent harm from automated decisions. Building on Tasks 3.19 to 3.24, identify and document the harms that may arise from automated decisions, and describe the measures that you have put in place to mitigate these risks.",
                 [
                     "Review harms identified in Tasks 3.19-3.24",
@@ -506,8 +492,7 @@ class NEOMBuildingAIPathway:
             ),
 
             self._create_step(
-                project_id, PhaseType.PLANNING_DESIGN, 30, "3.30",
-                "Human Governance Process Sign-off",
+                project_id, PhaseType.PLANNING_DESIGN, 31, "3.30",                "Human Governance Process Sign-off",
                 "Ensure the right human governance processes are in place and get sign-off from the DPO compliance officer and any other accountable individuals in the RACI. Explain and document whether the output of the AI system may lead to decisions or events that are difficult to reverse, or high impact to the safety or wellbeing of individuals.",
                 [
                     "Assess if AI output leads to difficult-to-reverse decisions",
@@ -522,8 +507,7 @@ class NEOMBuildingAIPathway:
 
             # Explainability Framework
             self._create_step(
-                project_id, PhaseType.PLANNING_DESIGN, 31, "3.31",
-                "User Notification for AI Interactions",
+                project_id, PhaseType.PLANNING_DESIGN, 32, "3.31",                "User Notification for AI Interactions",
                 "Document your features and processes designed to inform users when interacting with AI, emotional recognition, bio categorization or manipulative content. When the AI system results in fake or manipulative content, or leverages biometrics or emotional recognition, how will you inform users who interact with the AI system or its output?",
                 [
                     "Identify if system uses emotional recognition",
@@ -538,8 +522,7 @@ class NEOMBuildingAIPathway:
             ),
 
             self._create_step(
-                project_id, PhaseType.PLANNING_DESIGN, 32, "3.32",
-                "Residual Risk and Limitations Communication",
+                project_id, PhaseType.PLANNING_DESIGN, 33, "3.32",                "Residual Risk and Limitations Communication",
                 "Explain how you will inform operators/users of residual risks and limitations. In Task 3.27 we identified the residual risks after mitigation measures have been taken. Document how will you ensure users, operators and deploying entities are aware of these risks.",
                 [
                     "Review residual risks from Task 3.27",
@@ -553,8 +536,7 @@ class NEOMBuildingAIPathway:
             ),
 
             self._create_step(
-                project_id, PhaseType.PLANNING_DESIGN, 33, "3.33",
-                "AI System Logging Design",
+                project_id, PhaseType.PLANNING_DESIGN, 34, "3.33",                "AI System Logging Design",
                 "Design and document the AI system's logging operation. Design and document the AI System's log creation process, including under what circumstances what types of logs are produced. Describe how the input data is stored to aid resolving queries and audits. Describe how these logs enable the system configuration to be discovered.",
                 [
                     "Design log creation process",
@@ -568,8 +550,7 @@ class NEOMBuildingAIPathway:
             ),
 
             self._create_step(
-                project_id, PhaseType.PLANNING_DESIGN, 34, "3.34",
-                "Traceability and Auditability",
+                project_id, PhaseType.PLANNING_DESIGN, 35, "3.34",                "Traceability and Auditability",
                 "Explain how you will make AI decisions traceable and auditable. Explain and document how the information in Task 3.33 can be used to demonstrate whether the AI system was working as intended during its interaction with a specific user.",
                 [
                     "Describe how logs from Task 3.33 enable traceability",
@@ -582,8 +563,7 @@ class NEOMBuildingAIPathway:
             ),
 
             self._create_step(
-                project_id, PhaseType.PLANNING_DESIGN, 35, "3.35",
-                "AI Decision Explainability Design",
+                project_id, PhaseType.PLANNING_DESIGN, 36, "3.35",                "AI Decision Explainability Design",
                 "Design how you will make AI decisions explainable and communicate with stakeholders. Design & document what communication channels will you use with the users, operators and deploying entities? What constitutes an explanation for the AI system's output? This should include two elements: 1) At a high level how does the AI work? and 2) An explanation of what led to a specific outcome.",
                 [
                     "Design communication channels for users",
@@ -598,8 +578,7 @@ class NEOMBuildingAIPathway:
             ),
 
             self._create_step(
-                project_id, PhaseType.PLANNING_DESIGN, 36, "3.36",
-                "Complaints Process Design",
+                project_id, PhaseType.PLANNING_DESIGN, 37, "3.36",                "Complaints Process Design",
                 "Design a complaints process for end users. Design and document a process that end users, operators and deploying entities (as appropriate for your AI system) can use to lodge a complaint and monitor that complaint until resolution.",
                 [
                     "Design complaint submission mechanism for users",
@@ -615,8 +594,7 @@ class NEOMBuildingAIPathway:
 
             # Technology Development Record
             self._create_step(
-                project_id, PhaseType.PLANNING_DESIGN, 37, "3.37",
-                "Expected Accuracy, Robustness and Security",
+                project_id, PhaseType.PLANNING_DESIGN, 38, "3.37",                "Expected Accuracy, Robustness and Security",
                 "Describe why you'd expect your choice of algorithm and broader system design to be sufficiently accurate, robust and secure, even with outlier data or foreseeable cases of misuse. Describe and document the levels of accuracy, reliability and security you believe that your algorithm and AI system will need to achieve.",
                 [
                     "Define required accuracy levels for AI system",
@@ -630,8 +608,7 @@ class NEOMBuildingAIPathway:
             ),
 
             self._create_step(
-                project_id, PhaseType.PLANNING_DESIGN, 38, "3.38",
-                "Validation Methodology Design",
+                project_id, PhaseType.PLANNING_DESIGN, 39, "3.38",                "Validation Methodology Design",
                 "Describe the methodology that you will use to validate this belief described in Task 3.37. Describe and document the testing and validation scheme that you will use to demonstrate the accuracy, reliability and security of both the algorithm and the wider AI system.",
                 [
                     "Design validation methodology for accuracy",
@@ -645,8 +622,7 @@ class NEOMBuildingAIPathway:
             ),
 
             self._create_step(
-                project_id, PhaseType.PLANNING_DESIGN, 39, "3.39",
-                "Logging Operation Documentation",
+                project_id, PhaseType.PLANNING_DESIGN, 40, "3.39",                "Logging Operation Documentation",
                 "Design and document the AI system's logging operation. Design and document the AI System's log creation process, including under what circumstances what types of logs are produced. Describe how the input data is stored to aid resolving queries and audits.",
                 [
                     "Design comprehensive logging operation",
@@ -660,8 +636,7 @@ class NEOMBuildingAIPathway:
             ),
 
             self._create_step(
-                project_id, PhaseType.PLANNING_DESIGN, 40, "3.40",
-                "Design Phase Sign-off",
+                project_id, PhaseType.PLANNING_DESIGN, 41, "3.40",                "Design Phase Sign-off",
                 "Get the Design Phase documentation signed off by the AI assessor or Compliance Officer, before proceeding. Undertake a 'Pitstop' with the DPO to get the design phase documentation reviewed, and guidance given for the next phase. Get sign off to proceed from DPO and any other accountable individuals in the RACI.",
                 [
                     "Compile all design phase documentation",

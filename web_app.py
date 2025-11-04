@@ -840,6 +840,12 @@ def show_pathway_page():
 
 def show_neom_project_init_page():
     """Display NEOM project initialization page"""
+    # If a project is already loaded, go directly to pathway
+    if 'neom_project' in st.session_state and st.session_state.neom_project:
+        st.session_state.current_page = "neom_pathway"
+        st.rerun()
+        return
+
     # Return to home button
     if st.button("🏠 Return to Home Page", key="home_neom_init"):
         st.session_state.current_page = "welcome"
@@ -1786,6 +1792,12 @@ def show_project_dashboard():
 
 def show_neom_procuring_init_page():
     """Display NEOM Procuring AI project initialization page"""
+    # If a project is already loaded, go directly to pathway
+    if 'neom_project' in st.session_state and st.session_state.neom_project:
+        st.session_state.current_page = "neom_procuring_pathway"
+        st.rerun()
+        return
+
     # Return to home button
     if st.button("🏠 Return to Home Page", key="home_neom_procuring_init"):
         st.session_state.current_page = "welcome"
@@ -1981,6 +1993,12 @@ def show_neom_procuring_pathway_page():
 
 def show_neom_operating_init_page():
     """Display NEOM Operating AI project initialization page"""
+    # If a project is already loaded, go directly to pathway
+    if 'neom_project' in st.session_state and st.session_state.neom_project:
+        st.session_state.current_page = "neom_operating_pathway"
+        st.rerun()
+        return
+
     # Return to home button
     if st.button("🏠 Return to Home Page", key="home_neom_operating_init"):
         st.session_state.current_page = "welcome"
