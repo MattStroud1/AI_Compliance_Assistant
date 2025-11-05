@@ -856,11 +856,19 @@ def show_pathway_page():
 
 def show_neom_project_init_page():
     """Display NEOM project initialization page"""
-    # If a project is already loaded, go directly to pathway
+    # Check if a Building AI project is already loaded
     if 'neom_project' in st.session_state and st.session_state.neom_project:
-        st.session_state.current_page = "neom_pathway"
-        st.rerun()
-        return
+        project = st.session_state.neom_project
+        # Verify this is actually a Building AI project by checking phase structure
+        if project.phases and len(project.phases) == 4:
+            # Check if phases look like Building AI phases (they should start with "Planning & Design")
+            if "Planning & Design" in project.phases[0].name or (hasattr(project.phases[0], 'phase_type') and project.phases[0].phase_type.value == "planning_design"):
+                st.session_state.current_page = "neom_pathway"
+                st.rerun()
+                return
+
+        # Wrong project type - clear it
+        st.session_state.neom_project = None
 
     # Return to home button
     if st.button("🏠 Return to Home Page", key="home_neom_init"):
@@ -1941,11 +1949,19 @@ def show_project_dashboard():
 
 def show_neom_procuring_init_page():
     """Display NEOM Procuring AI project initialization page"""
-    # If a project is already loaded, go directly to pathway
+    # Check if a Procuring AI project is already loaded
     if 'neom_project' in st.session_state and st.session_state.neom_project:
-        st.session_state.current_page = "neom_procuring_pathway"
-        st.rerun()
-        return
+        project = st.session_state.neom_project
+        # Verify this is actually a Procuring AI project by checking phase structure
+        if project.phases and len(project.phases) == 7:
+            # Check if phases look like Procuring AI phases (first phase = "Project Setup & Assessment")
+            if "Project Setup & Assessment" in project.phases[0].name:
+                st.session_state.current_page = "neom_procuring_pathway"
+                st.rerun()
+                return
+
+        # Wrong project type - clear it
+        st.session_state.neom_project = None
 
     # Return to home button
     if st.button("🏠 Return to Home Page", key="home_neom_procuring_init"):
@@ -2142,11 +2158,19 @@ def show_neom_procuring_pathway_page():
 
 def show_neom_operating_init_page():
     """Display NEOM Operating AI project initialization page"""
-    # If a project is already loaded, go directly to pathway
+    # Check if an Operating AI project is already loaded
     if 'neom_project' in st.session_state and st.session_state.neom_project:
-        st.session_state.current_page = "neom_operating_pathway"
-        st.rerun()
-        return
+        project = st.session_state.neom_project
+        # Verify this is actually an Operating AI project by checking phase structure
+        if project.phases and len(project.phases) == 7:
+            # Check if phases look like Operating AI phases (first phase = "Project Setup & Documentation")
+            if "Project Setup & Documentation" in project.phases[0].name:
+                st.session_state.current_page = "neom_operating_pathway"
+                st.rerun()
+                return
+
+        # Wrong project type - clear it
+        st.session_state.neom_project = None
 
     # Return to home button
     if st.button("🏠 Return to Home Page", key="home_neom_operating_init"):
