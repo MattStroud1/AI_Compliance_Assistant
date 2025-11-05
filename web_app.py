@@ -3397,60 +3397,59 @@ def show_ropa_pathway_page():
                 st.markdown(step.description)
 
                 # Three-box layout for AI generation, model answer, and gap analysis
-                if step.status == StepStatus.IN_PROGRESS:
-                    st.markdown("---")
-                    st.markdown("### 📝 Document Your Response")
+                st.markdown("---")
+                st.markdown("### 📝 Document Your Response")
 
-                    # Top row: AI-generated answer (left) and Model answer (right)
-                    col1, col2 = st.columns([1, 1])
+                # Top row: AI-generated answer (left) and Model answer (right)
+                col1, col2 = st.columns([1, 1])
 
-                    with col1:
-                        st.markdown("**Your Organization's Current State**")
-                        st.markdown("*Upload documents or enter information about your current practices*")
+                with col1:
+                    st.markdown("**Your Organization's Current State**")
+                    st.markdown("*Upload documents or enter information about your current practices*")
 
-                        # File upload for AI generation
-                        uploaded_files = st.file_uploader(
-                            "Upload relevant documents",
-                            type=["pdf", "docx", "txt"],
-                            key=f"upload_{step.id}",
-                            accept_multiple_files=True,
-                            help="Upload policies, procedures, or other documents"
-                        )
-
-                        # Text area for manual input
-                        user_input = st.text_area(
-                            "Or describe your current state",
-                            key=f"input_{step.id}",
-                            height=200,
-                            placeholder="Describe what your organization currently has in place for this step..."
-                        )
-
-                        if uploaded_files or user_input:
-                            if st.button("🤖 Generate AI Analysis", key=f"generate_{step.id}"):
-                                with st.spinner("Analyzing your input..."):
-                                    # TODO: Implement AI generation based on uploads and input
-                                    st.info("AI analysis will be generated here based on your documents and input")
-
-                    with col2:
-                        st.markdown("**Model Answer / Best Practice**")
-                        st.markdown("*Reference example of what a complete response should include*")
-
-                        # Display checklist items as model answer guidance
-                        if step.checklist_items:
-                            for item in step.checklist_items:
-                                st.markdown(f"- {item}")
-
-                    # Bottom row: Gap analysis
-                    st.markdown("---")
-                    st.markdown("**Gap Analysis**")
-                    st.markdown("*Identify what's missing or needs improvement*")
-
-                    gap_analysis = st.text_area(
-                        "Document gaps between current state and best practice",
-                        key=f"gaps_{step.id}",
-                        height=150,
-                        placeholder="List what needs to be addressed to meet the requirements..."
+                    # File upload for AI generation
+                    uploaded_files = st.file_uploader(
+                        "Upload relevant documents",
+                        type=["pdf", "docx", "txt"],
+                        key=f"upload_{step.id}",
+                        accept_multiple_files=True,
+                        help="Upload policies, procedures, or other documents"
                     )
+
+                    # Text area for manual input
+                    user_input = st.text_area(
+                        "Or describe your current state",
+                        key=f"input_{step.id}",
+                        height=200,
+                        placeholder="Describe what your organization currently has in place for this step..."
+                    )
+
+                    if uploaded_files or user_input:
+                        if st.button("🤖 Generate AI Analysis", key=f"generate_{step.id}"):
+                            with st.spinner("Analyzing your input..."):
+                                # TODO: Implement AI generation based on uploads and input
+                                st.info("AI analysis will be generated here based on your documents and input")
+
+                with col2:
+                    st.markdown("**Model Answer / Best Practice**")
+                    st.markdown("*Reference example of what a complete response should include*")
+
+                    # Display checklist items as model answer guidance
+                    if step.checklist_items:
+                        for item in step.checklist_items:
+                            st.markdown(f"- {item}")
+
+                # Bottom row: Gap analysis
+                st.markdown("---")
+                st.markdown("**Gap Analysis**")
+                st.markdown("*Identify what's missing or needs improvement*")
+
+                gap_analysis = st.text_area(
+                    "Document gaps between current state and best practice",
+                    key=f"gaps_{step.id}",
+                    height=150,
+                    placeholder="List what needs to be addressed to meet the requirements..."
+                )
 
                 # Status update buttons
                 st.markdown("---")
