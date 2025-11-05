@@ -11,6 +11,8 @@ import uuid
 from ..models import (
     ComplianceStep,
     StepStatus,
+    NEOMPhase,
+    PhaseType,
 )
 
 
@@ -34,17 +36,95 @@ class NEOMTrainingPathway:
         self.pathway_name = "NEOM Training on AI"
         self.description = "Comprehensive 7-chapter course for learning trustworthy AI principles and compliance"
 
-    def create_chapters(self, project_id: str) -> List[ComplianceStep]:
-        """Create all seven training chapters"""
-        return [
-            *self._create_chapter_1_introduction(project_id),
-            *self._create_chapter_2_data_privacy(project_id),
-            *self._create_chapter_3_security(project_id),
-            *self._create_chapter_4_risk_fairness(project_id),
-            *self._create_chapter_5_explainability(project_id),
-            *self._create_chapter_6_tech_development_record(project_id),
-            *self._create_chapter_7_post_market_monitoring(project_id),
-        ]
+    def create_chapters(self, project_id: str) -> List[NEOMPhase]:
+        """Create all seven training chapters as NEOMPhase objects"""
+        chapters = []
+
+        # Chapter 1
+        chapter1_steps = self._create_chapter_1_introduction(project_id)
+        chapters.append(NEOMPhase(
+            id=str(uuid.uuid4()),
+            project_id=project_id,
+            phase_type=PhaseType.PLANNING_DESIGN,  # Use planning for chapter 1
+            name="Chapter 1: Introduction & Overview",
+            description="Why Trustworthy AI Matters",
+            order=1,
+            steps=chapter1_steps
+        ))
+
+        # Chapter 2
+        chapter2_steps = self._create_chapter_2_data_privacy(project_id)
+        chapters.append(NEOMPhase(
+            id=str(uuid.uuid4()),
+            project_id=project_id,
+            phase_type=PhaseType.PLANNING_DESIGN,
+            name="Chapter 2: Data & Privacy",
+            description="Implementing privacy by design and good data governance",
+            order=2,
+            steps=chapter2_steps
+        ))
+
+        # Chapter 3
+        chapter3_steps = self._create_chapter_3_security(project_id)
+        chapters.append(NEOMPhase(
+            id=str(uuid.uuid4()),
+            project_id=project_id,
+            phase_type=PhaseType.DATA_PREPARATION,
+            name="Chapter 3: Security",
+            description="AI-specific security threats and countermeasures",
+            order=3,
+            steps=chapter3_steps
+        ))
+
+        # Chapter 4
+        chapter4_steps = self._create_chapter_4_risk_fairness(project_id)
+        chapters.append(NEOMPhase(
+            id=str(uuid.uuid4()),
+            project_id=project_id,
+            phase_type=PhaseType.DATA_PREPARATION,
+            name="Chapter 4: Risk & Fairness",
+            description="Identifying biases and implementing fairness metrics",
+            order=4,
+            steps=chapter4_steps
+        ))
+
+        # Chapter 5
+        chapter5_steps = self._create_chapter_5_explainability(project_id)
+        chapters.append(NEOMPhase(
+            id=str(uuid.uuid4()),
+            project_id=project_id,
+            phase_type=PhaseType.BUILD_VALIDATE,
+            name="Chapter 5: Explainability",
+            description="Making AI decisions transparent and understandable",
+            order=5,
+            steps=chapter5_steps
+        ))
+
+        # Chapter 6
+        chapter6_steps = self._create_chapter_6_tech_development_record(project_id)
+        chapters.append(NEOMPhase(
+            id=str(uuid.uuid4()),
+            project_id=project_id,
+            phase_type=PhaseType.BUILD_VALIDATE,
+            name="Chapter 6: Technology Development Record",
+            description="Comprehensive documentation requirements",
+            order=6,
+            steps=chapter6_steps
+        ))
+
+        # Chapter 7
+        chapter7_steps = self._create_chapter_7_post_market_monitoring(project_id)
+        chapters.append(NEOMPhase(
+            id=str(uuid.uuid4()),
+            project_id=project_id,
+            phase_type=PhaseType.DEPLOYMENT_MONITORING,
+            name="Chapter 7: Post Market Monitoring",
+            description="Continuous monitoring and compliance assessments",
+            order=7,
+            steps=chapter7_steps
+        ))
+
+        return chapters
 
     def _create_step(self, project_id: str, chapter_num: int, order: int,
                      title: str, description: str, checklist: List[str]) -> ComplianceStep:

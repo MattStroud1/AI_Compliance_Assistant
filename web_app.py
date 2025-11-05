@@ -2357,8 +2357,12 @@ def show_neom_training_pathway_page():
     # Progress Overview
     if project.phases:
         total_chapters = len(project.phases)
-        completed_chapters = sum(1 for chapter in project.phases if chapter.status == StepStatus.COMPLETED)
-        in_progress_chapters = sum(1 for chapter in project.phases if chapter.status == StepStatus.IN_PROGRESS)
+        # Chapter status is derived from steps
+        completed_chapters = sum(1 for chapter in project.phases
+                                if all(step.status == StepStatus.COMPLETED for step in chapter.steps))
+        in_progress_chapters = sum(1 for chapter in project.phases
+                                  if any(step.status == StepStatus.IN_PROGRESS for step in chapter.steps)
+                                  and not all(step.status == StepStatus.COMPLETED for step in chapter.steps))
 
         st.markdown("### 📈 Course Progress")
         progress_pct = (completed_chapters / total_chapters * 100) if total_chapters > 0 else 0
@@ -2379,44 +2383,59 @@ def show_neom_training_pathway_page():
     st.markdown("### 📚 Course Chapters")
 
     for idx, chapter in enumerate(project.phases, 1):
+        # Chapter status is derived from its steps
+        if all(step.status == StepStatus.COMPLETED for step in chapter.steps):
+            chapter_status = StepStatus.COMPLETED
+        elif any(step.status == StepStatus.IN_PROGRESS for step in chapter.steps):
+            chapter_status = StepStatus.IN_PROGRESS
+        else:
+            chapter_status = StepStatus.NOT_STARTED
+
         status_icon = {
             StepStatus.COMPLETED: "✅",
             StepStatus.IN_PROGRESS: "🔄",
             StepStatus.NOT_STARTED: "⭕"
-        }.get(chapter.status, "⭕")
+        }.get(chapter_status, "⭕")
 
-        with st.expander(f"{status_icon} {chapter.title}", expanded=(chapter.status == StepStatus.IN_PROGRESS)):
+        with st.expander(f"{status_icon} {chapter.name}", expanded=(chapter_status == StepStatus.IN_PROGRESS)):
             st.markdown(chapter.description)
 
-            # Show checklist
-            if chapter.checklist_items:
-                st.markdown("**Learning Objectives:**")
-                for item in chapter.checklist_items:
-                    st.markdown(f"- {item}")
+            # Show each step in the chapter
+            for step in chapter.steps:
+                st.markdown(f"#### {step.title}")
+                st.markdown(step.description)
 
-            # Status update
-            col1, col2, col3 = st.columns([2, 2, 2])
-            with col1:
-                if st.button("Mark as In Progress", key=f"progress_{chapter.id}"):
-                    chapter.status = StepStatus.IN_PROGRESS
-                    st.session_state.storage_manager.save_project(project)
-                    st.rerun()
+                # Show learning objectives
+                if step.checklist_items:
+                    st.markdown("**Learning Objectives:**")
+                    for item in step.checklist_items:
+                        st.markdown(f"- {item}")
 
-            with col2:
-                if st.button("Mark as Completed", key=f"complete_{chapter.id}"):
-                    chapter.status = StepStatus.COMPLETED
-                    st.session_state.storage_manager.save_project(project)
-                    st.success(f"✅ {chapter.title} completed!")
-                    st.rerun()
+                # Status update for each step
+                col1, col2, col3 = st.columns([2, 2, 2])
+                with col1:
+                    if st.button("Mark as In Progress", key=f"progress_{step.id}"):
+                        step.status = StepStatus.IN_PROGRESS
+                        st.session_state.storage_manager.save_project(project)
+                        st.rerun()
 
-            with col3:
-                if st.button("Reset", key=f"reset_{chapter.id}"):
-                    chapter.status = StepStatus.NOT_STARTED
-                    st.session_state.storage_manager.save_project(project)
-                    st.rerun()
+                with col2:
+                    if st.button("Mark as Completed", key=f"complete_{step.id}"):
+                        step.status = StepStatus.COMPLETED
+                        st.session_state.storage_manager.save_project(project)
+                        st.success(f"✅ {step.title} completed!")
+                        st.rerun()
+
+                with col3:
+                    if st.button("Reset", key=f"reset_{step.id}"):
+                        step.status = StepStatus.NOT_STARTED
+                        st.session_state.storage_manager.save_project(project)
+                        st.rerun()
+
+                st.markdown("---")
 
     # Completion message
-    if all(chapter.status == StepStatus.COMPLETED for chapter in project.phases):
+    if all(all(step.status == StepStatus.COMPLETED for step in chapter.steps) for chapter in project.phases):
         st.balloons()
         st.success("🎉 Congratulations! You've completed all 7 chapters of the Trustworthy AI course!")
         st.info("You now have a comprehensive understanding of AI compliance requirements and best practices.")
