@@ -299,10 +299,16 @@ class ProjectStorageManager:
         if not project_file.exists():
             return None
 
-        with open(project_file, 'r', encoding='utf-8') as f:
-            project_data = json.load(f)
+        try:
+            with open(project_file, 'r', encoding='utf-8') as f:
+                project_data = json.load(f)
 
-        return NEOMProject(**project_data)
+            return NEOMProject(**project_data)
+        except Exception as e:
+            # Handle validation errors from old incompatible project formats
+            import logging
+            logging.warning(f"Failed to load project {project_id}: {str(e)[:100]}... Project may be from an old version and is incompatible.")
+            return None
 
     def list_all_projects(self) -> List[dict]:
         """
