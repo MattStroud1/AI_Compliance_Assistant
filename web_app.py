@@ -3400,56 +3400,110 @@ def show_ropa_pathway_page():
                 st.markdown("---")
                 st.markdown("### 📝 Document Your Response")
 
-                # Top row: AI-generated answer (left) and Model answer (right)
+                # AI Generation button (uses documents uploaded in sidebar)
+                st.markdown("**🤖 AI-Assisted Completion:**")
+                st.info("💡 Upload your organization's documents using the sidebar, then click below to generate an analysis.")
+
+                # Generate question based on step
+                question = f"{step.title}: {step.description}"
+
+                if st.button("✨ Generate Answer from Documents", key=f"rag_gen_{step.id}"):
+                    if not hasattr(st.session_state, 'rag_system') or not st.session_state.rag_system:
+                        st.warning("⚠️ Please upload documents using the sidebar first.")
+                    else:
+                        with st.spinner("Analyzing your project documents..."):
+                            result = st.session_state.rag_system.answer_question(question)
+
+                            if result["answer"] or result["guidance"]:
+                                st.session_state[f"draft_answer_{step.id}"] = result["answer"]
+                                st.session_state[f"draft_guidance_{step.id}"] = result["guidance"]
+                                st.session_state[f"draft_gap_analysis_{step.id}"] = result["gap_analysis"]
+                                st.session_state[f"draft_sources_{step.id}"] = result["sources"]
+                                st.session_state[f"draft_confidence_{step.id}"] = result["confidence"]
+                                st.rerun()
+
+                st.markdown("---")
+
+                # Top row: Current state (left) and Model answer (right)
                 col1, col2 = st.columns([1, 1])
 
                 with col1:
                     st.markdown("**Your Organization's Current State**")
-                    st.markdown("*Upload documents or enter information about your current practices*")
+                    st.markdown("*What you currently have in place (AI-generated or manually entered)*")
 
-                    # File upload for AI generation
-                    uploaded_files = st.file_uploader(
-                        "Upload relevant documents",
-                        type=["pdf", "docx", "txt"],
-                        key=f"upload_{step.id}",
-                        accept_multiple_files=True,
-                        help="Upload policies, procedures, or other documents"
-                    )
+                    # Show AI-generated answer if available
+                    if f"draft_answer_{step.id}" in st.session_state:
+                        confidence = st.session_state.get(f"draft_confidence_{step.id}", 0)
+                        confidence_color = "green" if confidence > 0.7 else "orange" if confidence > 0.5 else "red"
+                        st.markdown(f"**AI Analysis** (Confidence: :{confidence_color}[{confidence:.0%}])")
 
-                    # Text area for manual input
-                    user_input = st.text_area(
-                        "Or describe your current state",
-                        key=f"input_{step.id}",
-                        height=200,
-                        placeholder="Describe what your organization currently has in place for this step..."
-                    )
+                        # Editable answer from documents
+                        edited_answer = st.text_area(
+                            "Information found in your documents:",
+                            value=st.session_state[f"draft_answer_{step.id}"],
+                            height=250,
+                            key=f"edit_answer_{step.id}",
+                            help="This is what the AI found in your uploaded documents. Edit as needed."
+                        )
 
-                    if uploaded_files or user_input:
-                        if st.button("🤖 Generate AI Analysis", key=f"generate_{step.id}"):
-                            with st.spinner("Analyzing your input..."):
-                                # TODO: Implement AI generation based on uploads and input
-                                st.info("AI analysis will be generated here based on your documents and input")
+                        # Show sources
+                        if st.session_state.get(f"draft_sources_{step.id}"):
+                            with st.expander("📚 View Sources"):
+                                for source in st.session_state[f"draft_sources_{step.id}"]:
+                                    st.markdown(f"- {source}")
+                    else:
+                        # Manual input if no AI answer generated yet
+                        user_input = st.text_area(
+                            "Describe your current state",
+                            key=f"input_{step.id}",
+                            height=250,
+                            placeholder="Describe what your organization currently has in place for this step...\n\nOr use the 'Generate Answer from Documents' button above to auto-populate from your uploaded documents."
+                        )
 
                 with col2:
                     st.markdown("**Model Answer / Best Practice**")
-                    st.markdown("*Reference example of what a complete response should include*")
+                    st.markdown("*What a complete response should include*")
 
-                    # Display checklist items as model answer guidance
-                    if step.checklist_items:
-                        for item in step.checklist_items:
-                            st.markdown(f"- {item}")
+                    # Show AI-generated guidance if available, otherwise show checklist
+                    if f"draft_guidance_{step.id}" in st.session_state:
+                        guidance_text = st.session_state.get(f"draft_guidance_{step.id}", "")
+                        st.text_area(
+                            "Ideal answer should include:",
+                            value=guidance_text,
+                            height=250,
+                            key=f"guidance_{step.id}",
+                            disabled=True,
+                            help="Guidance on what a complete answer should cover"
+                        )
+                    else:
+                        # Display checklist items as model answer guidance
+                        if step.checklist_items:
+                            st.markdown("**Key requirements:**")
+                            for item in step.checklist_items:
+                                st.markdown(f"- {item}")
 
                 # Bottom row: Gap analysis
                 st.markdown("---")
-                st.markdown("**Gap Analysis**")
-                st.markdown("*Identify what's missing or needs improvement*")
+                st.markdown("**⚠️ Gap Analysis - What's Missing**")
+                st.markdown("*Identify gaps between your current state and best practice*")
 
-                gap_analysis = st.text_area(
-                    "Document gaps between current state and best practice",
-                    key=f"gaps_{step.id}",
-                    height=150,
-                    placeholder="List what needs to be addressed to meet the requirements..."
-                )
+                # Show AI-generated gap analysis if available
+                if f"draft_gap_analysis_{step.id}" in st.session_state:
+                    gap_analysis_text = st.session_state.get(f"draft_gap_analysis_{step.id}", "")
+                    gap_analysis = st.text_area(
+                        "Gaps and areas for improvement:",
+                        value=gap_analysis_text,
+                        height=150,
+                        key=f"gap_analysis_{step.id}",
+                        help="Review and edit the AI-identified gaps as needed"
+                    )
+                else:
+                    gap_analysis = st.text_area(
+                        "Document gaps between current state and best practice",
+                        key=f"gaps_{step.id}",
+                        height=150,
+                        placeholder="List what needs to be addressed to meet the requirements...\n\nThis will be auto-populated when you generate an answer from your documents."
+                    )
 
                 # Status update buttons
                 st.markdown("---")
