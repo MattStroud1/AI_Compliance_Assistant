@@ -471,6 +471,7 @@ def show_welcome_page():
     - **Building AI**: Comprehensive 4-phase journey with evidence collection, RACI management, and formal pitstop checkpoints for developing AI systems
     - **Procuring AI**: Evaluating and purchasing AI solutions from vendors
     - **Operating AI**: Deploying and managing AI systems in production
+    - **DPIA (Data Protection Impact Assessment)**: Conduct comprehensive DPIAs under UK GDPR with 8 structured steps across 4 phases
     - **ROPA Creation**: Create and maintain UK GDPR Article 30 Records of Processing Activities with 9 structured steps
     - **Training on AI**: Interactive 7-chapter course covering all aspects of trustworthy AI compliance
     """
