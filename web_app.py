@@ -367,6 +367,9 @@ def show_welcome_page():
 
     This tool helps you navigate **EU AI Act** and **Saudi Arabian AI regulations**
     through specialized pathways tailored to your role and objectives.
+
+    📤 **Getting Started:** Use the sidebar to upload your project documents before loading or creating a project.
+    This will help the AI assistant provide more contextual guidance throughout your compliance journey.
     """
     )
 
