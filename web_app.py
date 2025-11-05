@@ -47,6 +47,7 @@ from src.pathways.neom_building_updated import NEOMBuildingAIPathway
 from src.pathways.neom_procuring_updated import NEOMProcuringAIPathway
 from src.pathways.neom_operating_updated import NEOMOperatingAIPathway
 from src.pathways.neom_training_updated import NEOMTrainingPathway
+from src.pathways.ropa import ROPAPathway
 from src.storage.project_storage import ProjectStorageManager
 from src.notifications.email_service import EmailService
 from src.rag.document_rag import DocumentRAG
@@ -427,6 +428,12 @@ def show_welcome_page():
             "description": "Comprehensive post-market monitoring for operational AI systems with 7 compliance frameworks",
             "page": "neom_operating_init",
         },
+        "ropa": {
+            "icon": "📋",
+            "title": "ROPA Creation",
+            "description": "Step-by-step guide for creating and maintaining UK GDPR Article 30 Records of Processing Activities",
+            "page": "ropa_init",
+        },
         "neom_training": {
             "icon": "🎓",
             "title": "Training on AI",
@@ -457,6 +464,7 @@ def show_welcome_page():
     - **Building AI**: Comprehensive 4-phase journey with evidence collection, RACI management, and formal pitstop checkpoints for developing AI systems
     - **Procuring AI**: Evaluating and purchasing AI solutions from vendors
     - **Operating AI**: Deploying and managing AI systems in production
+    - **ROPA Creation**: Create and maintain UK GDPR Article 30 Records of Processing Activities with 9 structured steps
     - **Training on AI**: Interactive 7-chapter course covering all aspects of trustworthy AI compliance
     """
     )
@@ -3145,6 +3153,336 @@ def show_neom_training_pathway_page():
         st.info("You now have a comprehensive understanding of AI compliance requirements and best practices.")
 
 
+def show_ropa_init_page():
+    """Display ROPA project initialization page"""
+    # If a project is already loaded, go directly to pathway
+    if 'neom_project' in st.session_state and st.session_state.neom_project:
+        st.session_state.current_page = "ropa_pathway"
+        st.rerun()
+        return
+
+    # Return to home button
+    if st.button("🏠 Return to Home Page", key="home_ropa_init"):
+        st.session_state.current_page = "welcome"
+        st.rerun()
+
+    st.title("📋 ROPA (Record of Processing Activities) - Project Initialization")
+
+    st.markdown("""
+    ### Create Your UK GDPR Article 30 Compliant ROPA
+
+    This comprehensive pathway guides you through **9 structured steps** for creating and maintaining a Record of Processing Activities:
+
+    **Phase 1: Planning & Scoping**
+    1. 📊 **Determine ROPA Obligations** - Assess scope and legal requirements
+    2. 👥 **Assign Responsibility** - Set up project team and resources
+
+    **Phase 2: Data Collection & Mapping**
+    3. 🗺️ **Map Processing Activities** - Identify all data processing across organization
+    4. 📝 **Define ROPA Requirements** - Establish required fields and template
+    5. 📥 **Collect Information** - Gather detailed data for each activity
+
+    **Phase 3: Documentation & Integration**
+    6. ✍️ **Document Activities** - Format and record all processing in ROPA
+    7. 🔗 **Integrate Frameworks** - Link ROPA with DPIAs, notices, and agreements
+    8. 🛠️ **Leverage Tools** - Set up templates and management systems
+
+    **Phase 4: Maintenance**
+    9. 🔄 **Maintain & Update** - Establish ongoing review and update processes
+
+    Each step includes detailed guidance on **why it matters**, **what to do**, and **how to proceed**.
+    """)
+
+    st.markdown("---")
+    st.subheader("Project Information")
+
+    with st.form("ropa_form"):
+        project_name = st.text_input(
+            "Project Name *",
+            placeholder="e.g., 2025 ROPA Creation Project",
+            help="Internal name for tracking this ROPA project"
+        )
+
+        ai_system_name = st.text_input(
+            "Organization Name *",
+            placeholder="e.g., Acme Corporation",
+            help="Your organization's legal name"
+        )
+
+        ai_system_purpose = st.text_area(
+            "Project Scope *",
+            placeholder="Describe the scope of this ROPA (e.g., UK operations, all processing activities)...",
+            height=100,
+            help="Define what this ROPA will cover"
+        )
+
+        st.markdown("### RACI Matrix Setup")
+        st.markdown("Define key stakeholders for ROPA creation")
+
+        col1, col2 = st.columns(2)
+
+        with col1:
+            project_lead_name = st.text_input("ROPA Project Lead Name *", help="Often the DPO or Privacy Officer")
+            project_lead_email = st.text_input("Project Lead Email *")
+
+        with col2:
+            pdpo_name = st.text_input("DPO Name *", help="Data Protection Officer")
+            pdpo_email = st.text_input("DPO Email *")
+
+        st.markdown("### Notification Settings")
+        email_notifications = st.checkbox(
+            "Enable email notifications for review checkpoints",
+            value=True,
+            help="Send notifications when ROPA milestones are reached"
+        )
+
+        col1, col2 = st.columns([1, 1])
+
+        with col1:
+            if st.form_submit_button("← Back", use_container_width=True):
+                st.session_state.current_page = "welcome"
+                st.rerun()
+
+        with col2:
+            submit = st.form_submit_button("Create ROPA Project →", type="primary", use_container_width=True)
+
+        if submit:
+            if not all([project_name, ai_system_name, ai_system_purpose,
+                       project_lead_name, project_lead_email, pdpo_name, pdpo_email]):
+                st.error("Please fill in all required fields marked with *")
+            else:
+                # Create ROPA project
+                project_id = str(uuid.uuid4())
+
+                # Create project folder structure
+                st.session_state.storage_manager.create_project_folder(project_id)
+
+                # Initialize RACI matrix
+                raci_matrix = RACIMatrix(
+                    project_id=project_id,
+                    entries=[
+                        RACIEntry(
+                            task_name="ROPA Creation and Maintenance",
+                            responsible=[project_lead_email],
+                            accountable=[project_lead_email],
+                            consulted=[pdpo_email],
+                            informed=[]
+                        )
+                    ]
+                )
+
+                # Create ROPA project using NEOMProject structure
+                neom_project = NEOMProject(
+                    project_id=project_id,
+                    project_name=project_name,
+                    ai_system_name=ai_system_name,
+                    ai_system_purpose=ai_system_purpose,
+                    raci_matrix=raci_matrix,
+                    phases=[],
+                    evidence=[],
+                    pitstops=[]
+                )
+
+                # Generate ROPA pathway phases
+                ropa_pathway = ROPAPathway()
+                phases = ropa_pathway.create_phases(project_id)
+                neom_project.phases = phases
+
+                # Save project
+                st.session_state.storage_manager.save_project(neom_project)
+
+                # Store in session
+                st.session_state.neom_project = neom_project
+
+                # Send notification if enabled
+                if email_notifications and 'email_service' in st.session_state:
+                    try:
+                        st.session_state.email_service.send_project_started_notification(
+                            to_email=project_lead_email,
+                            project_name=project_name,
+                            ai_system_name=ai_system_name
+                        )
+                    except Exception as e:
+                        st.warning(f"Project created but email notification failed: {str(e)}")
+
+                st.success(f"✅ ROPA project '{project_name}' created successfully!")
+                st.session_state.current_page = "ropa_pathway"
+                st.rerun()
+
+
+def show_ropa_pathway_page():
+    """Display ROPA pathway with 9 structured steps"""
+    # Return to home button
+    if st.button("🏠 Return to Home Page", key="home_ropa_pathway"):
+        st.session_state.current_page = "welcome"
+        st.rerun()
+
+    project = st.session_state.neom_project
+
+    if not project:
+        st.error("No ROPA project found. Please create a project first.")
+        if st.button("← Back to Home"):
+            st.session_state.current_page = "welcome"
+            st.rerun()
+        return
+
+    # Header
+    st.title(f"📋 {project.project_name}")
+    st.markdown(f"**Organization:** {project.ai_system_name}")
+    st.markdown(f"**Scope:** {project.ai_system_purpose}")
+
+    # Navigation buttons
+    st.markdown("### Navigation")
+    col1, col2, col3 = st.columns([2, 2, 1])
+
+    with col1:
+        if st.button("📚 View All Steps", key="view_phases_ropa", use_container_width=True):
+            st.session_state.neom_view = "phases"
+            st.rerun()
+
+    with col2:
+        if st.button("📊 View Dashboard", key="view_dashboard_ropa", use_container_width=True):
+            st.session_state.current_page = "dashboard"
+            st.rerun()
+
+    with col3:
+        if st.button("💾 Save", key="save_ropa"):
+            st.session_state.storage_manager.save_project(project)
+            st.success("✅ Saved!")
+
+    st.markdown("---")
+
+    # Progress Overview
+    if project.phases:
+        total_steps = sum(len(phase.steps) for phase in project.phases)
+        completed_steps = sum(1 for phase in project.phases
+                             for step in phase.steps
+                             if step.status == StepStatus.COMPLETED)
+
+        st.markdown("### 📈 Progress Overview")
+        progress_pct = (completed_steps / total_steps * 100) if total_steps > 0 else 0
+        st.progress(progress_pct / 100)
+        st.markdown(f"**{completed_steps}** of **{total_steps}** steps completed ({progress_pct:.0f}%)")
+
+        col1, col2, col3 = st.columns(3)
+        with col1:
+            st.metric("✅ Completed", completed_steps)
+        with col2:
+            in_progress = sum(1 for phase in project.phases
+                            for step in phase.steps
+                            if step.status == StepStatus.IN_PROGRESS)
+            st.metric("🔄 In Progress", in_progress)
+        with col3:
+            not_started = total_steps - completed_steps - in_progress
+            st.metric("📝 Not Started", not_started)
+
+    st.markdown("---")
+
+    # Show all phases and steps
+    st.markdown("### 📚 ROPA Creation Steps")
+
+    for idx, phase in enumerate(project.phases, 1):
+        # Phase status
+        phase_complete = all(step.status == StepStatus.COMPLETED for step in phase.steps)
+        phase_in_progress = any(step.status == StepStatus.IN_PROGRESS for step in phase.steps)
+
+        status_icon = "✅" if phase_complete else ("🔄" if phase_in_progress else "⭕")
+
+        with st.expander(f"{status_icon} {phase.name}", expanded=phase_in_progress):
+            st.markdown(phase.description)
+
+            # Show each step
+            for step in phase.steps:
+                st.markdown(f"#### {step.title}")
+                st.markdown(step.description)
+
+                # Three-box layout for AI generation, model answer, and gap analysis
+                if step.status == StepStatus.IN_PROGRESS:
+                    st.markdown("---")
+                    st.markdown("### 📝 Document Your Response")
+
+                    # Top row: AI-generated answer (left) and Model answer (right)
+                    col1, col2 = st.columns([1, 1])
+
+                    with col1:
+                        st.markdown("**Your Organization's Current State**")
+                        st.markdown("*Upload documents or enter information about your current practices*")
+
+                        # File upload for AI generation
+                        uploaded_files = st.file_uploader(
+                            "Upload relevant documents",
+                            type=["pdf", "docx", "txt"],
+                            key=f"upload_{step.id}",
+                            accept_multiple_files=True,
+                            help="Upload policies, procedures, or other documents"
+                        )
+
+                        # Text area for manual input
+                        user_input = st.text_area(
+                            "Or describe your current state",
+                            key=f"input_{step.id}",
+                            height=200,
+                            placeholder="Describe what your organization currently has in place for this step..."
+                        )
+
+                        if uploaded_files or user_input:
+                            if st.button("🤖 Generate AI Analysis", key=f"generate_{step.id}"):
+                                with st.spinner("Analyzing your input..."):
+                                    # TODO: Implement AI generation based on uploads and input
+                                    st.info("AI analysis will be generated here based on your documents and input")
+
+                    with col2:
+                        st.markdown("**Model Answer / Best Practice**")
+                        st.markdown("*Reference example of what a complete response should include*")
+
+                        # Display checklist items as model answer guidance
+                        if step.checklist_items:
+                            for item in step.checklist_items:
+                                st.markdown(f"- {item}")
+
+                    # Bottom row: Gap analysis
+                    st.markdown("---")
+                    st.markdown("**Gap Analysis**")
+                    st.markdown("*Identify what's missing or needs improvement*")
+
+                    gap_analysis = st.text_area(
+                        "Document gaps between current state and best practice",
+                        key=f"gaps_{step.id}",
+                        height=150,
+                        placeholder="List what needs to be addressed to meet the requirements..."
+                    )
+
+                # Status update buttons
+                st.markdown("---")
+                col1, col2, col3 = st.columns([2, 2, 2])
+                with col1:
+                    if st.button("Mark as In Progress", key=f"progress_{step.id}"):
+                        step.status = StepStatus.IN_PROGRESS
+                        st.session_state.storage_manager.save_project(project)
+                        st.rerun()
+
+                with col2:
+                    if st.button("Mark as Completed", key=f"complete_{step.id}"):
+                        step.status = StepStatus.COMPLETED
+                        st.session_state.storage_manager.save_project(project)
+                        st.success(f"✅ {step.title} completed!")
+                        st.rerun()
+
+                with col3:
+                    if st.button("Reset", key=f"reset_{step.id}"):
+                        step.status = StepStatus.NOT_STARTED
+                        st.session_state.storage_manager.save_project(project)
+                        st.rerun()
+
+                st.markdown("---")
+
+    # Completion check
+    if all(all(step.status == StepStatus.COMPLETED for step in phase.steps) for phase in project.phases):
+        st.balloons()
+        st.success("🎉 Congratulations! You've completed all 9 steps of the ROPA creation process!")
+        st.info("Your Record of Processing Activities is now complete and ready for ICO inspection.")
+
+
 # Main app logic
 def main():
     """Main application logic"""
@@ -3170,6 +3508,10 @@ def main():
         show_neom_training_init_page()
     elif st.session_state.current_page == "neom_training_pathway":
         show_neom_training_pathway_page()
+    elif st.session_state.current_page == "ropa_init":
+        show_ropa_init_page()
+    elif st.session_state.current_page == "ropa_pathway":
+        show_ropa_pathway_page()
     elif st.session_state.current_page == "project_dashboard":
         show_project_dashboard()
 
