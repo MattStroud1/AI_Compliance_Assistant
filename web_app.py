@@ -2334,6 +2334,18 @@ def _generate_quiz_questions(chapter_idx: int, section_title: str):
                 "options": ["46 pages", "75 pages", "123 pages", "200 pages"],
                 "correct": "123 pages",
                 "explanation": "The EU AI Act contains 123 pages of processes, documents, and controls that organizations must comply with."
+            },
+            {
+                "question": "According to the bulletproof vest example, what makes an AI system truly 'work'?",
+                "options": ["High accuracy on test data", "Fast inference speed", "Works reliably for all people, not just some", "Low computational cost"],
+                "correct": "Works reliably for all people, not just some",
+                "explanation": "For an AI system to truly 'work', it needs to do more than produce the right outcome some of the time, for some people - it must work reliably for everyone."
+            },
+            {
+                "question": "How many pages of AI Ethics Principles does Saudi Arabia's SDAIA have?",
+                "options": ["23 pages", "46 pages", "75 pages", "123 pages"],
+                "correct": "46 pages",
+                "explanation": "Saudi Arabia's SDAIA has published 46 pages of AI Ethics Principles that organizations must follow."
             }
         ],
 
@@ -2356,6 +2368,18 @@ def _generate_quiz_questions(chapter_idx: int, section_title: str):
                 "options": ["CEO", "CTO", "Data Protection Officer (DPO)", "Legal Counsel"],
                 "correct": "Data Protection Officer (DPO)",
                 "explanation": "The Data Protection Officer (DPO) must review and sign off on all data governance decisions, ensuring privacy and legal compliance."
+            },
+            {
+                "question": "What is the key difference between 'Responsible' and 'Accountable' in RACI?",
+                "options": ["They mean the same thing", "Responsible does the work; Accountable is ultimately answerable", "Accountable does more work", "Responsible has higher authority"],
+                "correct": "Responsible does the work; Accountable is ultimately answerable",
+                "explanation": "In RACI, 'Responsible' means the person who actually does the work, while 'Accountable' is the person who is ultimately answerable for the decision or task being completed correctly."
+            },
+            {
+                "question": "Why is specificity important in RACI assignments?",
+                "options": ["It looks more professional", "It prevents costly gaps and misunderstandings", "It's required by law", "It makes the matrix larger"],
+                "correct": "It prevents costly gaps and misunderstandings",
+                "explanation": "Specificity in RACI assignments is crucial because vague assignments lead to gaps where critical tasks fall through the cracks, potentially causing serious compliance and privacy issues."
             }
         ],
 
@@ -2377,6 +2401,18 @@ def _generate_quiz_questions(chapter_idx: int, section_title: str):
                 "options": ["Privacy Impact Assessment", "Legitimate Interest Assessment", "Data Protection Impact Assessment", "Risk Assessment"],
                 "correct": "Legitimate Interest Assessment",
                 "explanation": "Before relying on legitimate interest, you must conduct a Legitimate Interest Assessment (LIA) that balances your interests against the data subject's rights and freedoms."
+            },
+            {
+                "question": "Which type of data includes biometric data and genetic data?",
+                "options": ["Regular personal data", "Special category (sensitive) data", "Anonymous data", "Aggregated data"],
+                "correct": "Special category (sensitive) data",
+                "explanation": "Biometric data and genetic data are classified as special categories of sensitive personal data under GDPR, requiring extra protection."
+            },
+            {
+                "question": "What requirement makes consent the most demanding legal basis?",
+                "options": ["Must be documented in writing", "Must be freely given, specific, informed, and unambiguous", "Must be renewed annually", "Must be approved by DPO"],
+                "correct": "Must be freely given, specific, informed, and unambiguous",
+                "explanation": "Consent must meet strict criteria: freely given (not coerced), specific (for particular purposes), informed (users understand what they're agreeing to), and unambiguous (clear affirmative action required)."
             }
         ],
 
@@ -2398,6 +2434,18 @@ def _generate_quiz_questions(chapter_idx: int, section_title: str):
                 "options": ["Only the project lead", "The CEO", "The Data Protection Officer", "External auditors"],
                 "correct": "The Data Protection Officer",
                 "explanation": "The DPO must review the PIA at pitstop meetings to ensure privacy risks are properly assessed and mitigated."
+            },
+            {
+                "question": "What type of processing activities trigger PIA requirements?",
+                "options": ["All data processing", "Only international transfers", "High-risk processing activities", "Only government data"],
+                "correct": "High-risk processing activities",
+                "explanation": "PIAs are required for high-risk data processing activities, such as large-scale profiling, systematic monitoring, or processing special categories of data."
+            },
+            {
+                "question": "What is the first part of a PIA?",
+                "options": ["Risk assessment", "Description of intended processing", "Security measures", "Justification"],
+                "correct": "Description of intended processing",
+                "explanation": "The first part of a PIA is the description of intended processing, which outlines what data will be collected, how it will be used, and why."
             }
         ],
 
@@ -2419,6 +2467,18 @@ def _generate_quiz_questions(chapter_idx: int, section_title: str):
                 "options": ["Encrypts sensitive fields", "Removes PII from datasets", "Adds carefully calibrated noise to protect individuals", "Creates synthetic copies of data"],
                 "correct": "Adds carefully calibrated noise to protect individuals",
                 "explanation": "Differential Privacy manipulates data by adding carefully calibrated noise so it no longer reflects identifiable individuals while preserving overall statistical properties."
+            },
+            {
+                "question": "What is the main risk with data anonymization?",
+                "options": ["It's too expensive", "It slows down processing", "Re-identification is possible with auxiliary data", "It requires special hardware"],
+                "correct": "Re-identification is possible with auxiliary data",
+                "explanation": "Even anonymized data can potentially be re-identified when combined with auxiliary information from other sources, making it critical to assess re-identification risks."
+            },
+            {
+                "question": "What does Synthetic Data generation do?",
+                "options": ["Encrypts real data", "Creates artificial data that mimics real data patterns", "Compresses data files", "Validates data quality"],
+                "correct": "Creates artificial data that mimics real data patterns",
+                "explanation": "Synthetic Data generation creates artificial datasets that preserve the statistical properties and patterns of real data without containing actual personal information."
             }
         ],
 
@@ -2441,6 +2501,18 @@ def _generate_quiz_questions(chapter_idx: int, section_title: str):
                 "options": ["CEO and CTO", "CISO and DPO", "Legal and Compliance", "Dev and Ops teams"],
                 "correct": "CISO and DPO",
                 "explanation": "Both the CISO (Chief Information Security Officer) and DPO (Data Protection Officer) must sign off, ensuring both traditional security and AI-specific concerns are addressed."
+            },
+            {
+                "question": "What makes AI attack surfaces more complex than traditional software?",
+                "options": ["Larger codebases", "More users", "Attacks can target data, learning process, and decision patterns", "More network connections"],
+                "correct": "Attacks can target data, learning process, and decision patterns",
+                "explanation": "AI systems have complex attack surfaces because adversaries can attack not just the code and infrastructure, but also manipulate training data, corrupt the learning process, and exploit decision-making patterns."
+            },
+            {
+                "question": "What is a key AI-specific security concern that doesn't exist in traditional software?",
+                "options": ["Password vulnerabilities", "Model behavior manipulation through data", "Network firewall breaches", "SQL injection attacks"],
+                "correct": "Model behavior manipulation through data",
+                "explanation": "Unlike traditional software where behavior is explicitly programmed, AI systems learn from data, making them vulnerable to manipulation through corrupted or malicious training data."
             }
         ],
 
@@ -2462,6 +2534,18 @@ def _generate_quiz_questions(chapter_idx: int, section_title: str):
                 "options": ["Stealing model parameters", "Poisoning pre-trained models with backdoors", "DDoS on training infrastructure", "Extracting training data"],
                 "correct": "Poisoning pre-trained models with backdoors",
                 "explanation": "BadNets is a supply chain attack where pre-trained models are poisoned with backdoors that persist even after fine-tuning for specific applications."
+            },
+            {
+                "question": "Why is data poisoning particularly dangerous at scale?",
+                "options": ["It requires expensive infrastructure", "Only 3% poisoned data can alter behavior", "It only works on small models", "It's easy to detect"],
+                "correct": "Only 3% poisoned data can alter behavior",
+                "explanation": "Data poisoning is dangerous because research shows that poisoning as little as 3% of training data can significantly alter a model's behavior, and this is difficult to detect in large datasets."
+            },
+            {
+                "question": "What happens to backdoors in BadNets attacks after fine-tuning?",
+                "options": ["They are removed", "They persist even after fine-tuning", "They become stronger", "They only work on original tasks"],
+                "correct": "They persist even after fine-tuning",
+                "explanation": "The danger of BadNets attacks is that the backdoors embedded in pre-trained models persist even after the model is fine-tuned for specific applications, making them a serious supply chain threat."
             }
         ],
 
@@ -2483,6 +2567,18 @@ def _generate_quiz_questions(chapter_idx: int, section_title: str):
                 "options": ["Running the model backwards", "Using model outputs to reconstruct training data", "Inverting prediction confidence", "Reversing model updates"],
                 "correct": "Using model outputs to reconstruct training data",
                 "explanation": "Model inversion attacks use careful querying of a model's outputs to infer and potentially reconstruct information about the data it was trained on."
+            },
+            {
+                "question": "What is the key characteristic of adversarial perturbations?",
+                "options": ["They are large and obvious", "They are imperceptible to humans but change AI predictions", "They corrupt the entire input", "They require physical access"],
+                "correct": "They are imperceptible to humans but change AI predictions",
+                "explanation": "Adversarial perturbations are carefully crafted, tiny modifications that are imperceptible or barely noticeable to humans but cause significant changes in AI model predictions."
+            },
+            {
+                "question": "Why is transferability a major concern for AI security?",
+                "options": ["It makes attacks slower", "Attackers can fool multiple models without access to them", "It only affects old models", "It's easy to prevent"],
+                "correct": "Attackers can fool multiple models without access to them",
+                "explanation": "Transferability means an attacker can create adversarial examples against a surrogate model and use them to attack other models they don't have access to, making these attacks practical and scalable."
             }
         ],
 
@@ -2505,6 +2601,18 @@ def _generate_quiz_questions(chapter_idx: int, section_title: str):
                 "options": ["It increases costs", "It reduces performance", "Future generations bear the cost", "It slows down training"],
                 "correct": "Future generations bear the cost",
                 "explanation": "Environmental impact from AI's energy consumption is a fairness issue because future generations will bear the environmental costs of today's AI convenience."
+            },
+            {
+                "question": "What does the 'Risk' thread in AI systems primarily ask?",
+                "options": ["How fast can it run?", "What could go wrong?", "How much does it cost?", "How accurate is it?"],
+                "correct": "What could go wrong?",
+                "explanation": "The Risk thread focuses on identifying what could go wrong with the AI system, assessing potential harms and their likelihood."
+            },
+            {
+                "question": "Which category of rights includes access to education and healthcare?",
+                "options": ["Civil and Political Rights", "Economic, Social and Cultural Rights", "Environmental Rights", "Property Rights"],
+                "correct": "Economic, Social and Cultural Rights",
+                "explanation": "Economic, Social and Cultural Rights include access to education, healthcare, fair wages, and adequate standard of living."
             }
         ],
 
@@ -2526,6 +2634,18 @@ def _generate_quiz_questions(chapter_idx: int, section_title: str):
                 "options": ["Out-of-the-loop", "In-the-loop", "Automated", "Delayed review"],
                 "correct": "In-the-loop",
                 "explanation": "High-stakes decisions (hiring, lending, medical diagnoses) require human-in-the-loop (HITL) oversight where the AI recommends but humans ultimately decide."
+            },
+            {
+                "question": "What is the third step in the bias escalation process?",
+                "options": ["Biased Input Data", "AI Decision Making", "Feedback Loop", "Escalation"],
+                "correct": "Feedback Loop",
+                "explanation": "The bias escalation process follows: 1) Biased Input Data, 2) AI Decision Making, 3) Feedback Loop, 4) Reinforcement, 5) Escalation."
+            },
+            {
+                "question": "Why is automation bias particularly concerning in AI systems?",
+                "options": ["It makes AI slower", "People defer to AI even when it might be wrong", "It increases costs", "It makes training harder"],
+                "correct": "People defer to AI even when it might be wrong",
+                "explanation": "Automation bias is concerning because people tend to over-trust AI recommendations and defer to them inappropriately, even when warned the AI might be wrong, potentially amplifying errors."
             }
         ],
 
@@ -2547,6 +2667,18 @@ def _generate_quiz_questions(chapter_idx: int, section_title: str):
                 "options": ["Model confirms predictions", "Interpreting data to support pre-existing beliefs", "Confirming test results", "Bias in confirmation emails"],
                 "correct": "Interpreting data to support pre-existing beliefs",
                 "explanation": "Confirmation bias is when humans interpret data and select features in ways that support their pre-existing beliefs, affecting what goes into the model."
+            },
+            {
+                "question": "What is sampling bias?",
+                "options": ["Errors in data collection", "Training data not representative of real-world population", "Measuring the wrong variables", "Using outdated data"],
+                "correct": "Training data not representative of real-world population",
+                "explanation": "Sampling bias occurs when training data is not representative of the population the model will serve, leading to poor performance for under-represented groups."
+            },
+            {
+                "question": "Why is measurement bias particularly problematic in healthcare AI?",
+                "options": ["Healthcare data is expensive", "Instruments may give inaccurate readings for certain groups", "Healthcare AI is new", "Doctors don't trust AI"],
+                "correct": "Instruments may give inaccurate readings for certain groups",
+                "explanation": "Measurement bias in healthcare is problematic because instruments like blood pressure cuffs or pulse oximeters may systematically give less accurate readings for certain body sizes or skin tones, introducing bias into training data."
             }
         ],
 
@@ -2568,6 +2700,18 @@ def _generate_quiz_questions(chapter_idx: int, section_title: str):
                 "options": ["Yes, with enough data", "Yes, with the right algorithm", "No, they can be mathematically incompatible", "Only for simple models"],
                 "correct": "No, they can be mathematically incompatible",
                 "explanation": "In many real-world scenarios, different fairness definitions are mathematically incompatible - optimizing for one may worsen another, requiring careful choices."
+            },
+            {
+                "question": "What does TPR stand for in fairness metrics?",
+                "options": ["Total Prediction Rate", "True Positive Rate", "Training Performance Ratio", "Test Pass Rate"],
+                "correct": "True Positive Rate",
+                "explanation": "TPR stands for True Positive Rate, which measures the proportion of actual positive cases that are correctly identified by the model."
+            },
+            {
+                "question": "Which fairness metric is more stringent?",
+                "options": ["Demographic Parity", "Equal Opportunity", "Equalized Odds", "The 80% rule"],
+                "correct": "Equalized Odds",
+                "explanation": "Equalized Odds is more stringent because it requires balancing both True Positive Rates and False Positive Rates across groups, whereas Equal Opportunity only balances TPR."
             }
         ],
 
@@ -2590,6 +2734,18 @@ def _generate_quiz_questions(chapter_idx: int, section_title: str):
                 "options": ["SHAP values", "Decision trees", "Saliency maps", "Linear regression coefficients"],
                 "correct": "Saliency maps",
                 "explanation": "Saliency maps are visualization techniques that highlight which pixels in an image most influenced the model's prediction, ideal for computer vision."
+            },
+            {
+                "question": "What does LIME stand for?",
+                "options": ["Linear Interpretation Model Explanation", "Local Interpretable Model-agnostic Explanations", "Learning Integrated Model Evaluation", "Layered Inference Mapping Engine"],
+                "correct": "Local Interpretable Model-agnostic Explanations",
+                "explanation": "LIME stands for Local Interpretable Model-agnostic Explanations, a technique that explains individual predictions by fitting simple models locally."
+            },
+            {
+                "question": "What theoretical foundation does SHAP use?",
+                "options": ["Linear algebra", "Game theory", "Probability theory", "Information theory"],
+                "correct": "Game theory",
+                "explanation": "SHAP uses Shapley values from cooperative game theory to fairly distribute the prediction contribution among features, ensuring consistent and fair feature attributions."
             }
         ],
 
@@ -2611,6 +2767,18 @@ def _generate_quiz_questions(chapter_idx: int, section_title: str):
                 "options": ["Train all users", "Get regulatory approval", "Validate explanations with actual users", "Publish documentation"],
                 "correct": "Validate explanations with actual users",
                 "explanation": "You must validate your communication channels with actual users BEFORE deployment to ensure they truly understand how the AI works and its limitations."
+            },
+            {
+                "question": "Why is user testing of AI explanations critical before deployment?",
+                "options": ["It's required by law", "To ensure users truly understand how the AI works", "To reduce development costs", "To speed up deployment"],
+                "correct": "To ensure users truly understand how the AI works",
+                "explanation": "User testing is critical because what seems clear to developers may not be clear to users. You must validate that actual users understand the AI's operation and limitations before deployment."
+            },
+            {
+                "question": "What type of content requires AI disclosure to prevent deepfake concerns?",
+                "options": ["All AI content", "Only text content", "AI-generated imagery that could be mistaken for real", "Only audio content"],
+                "correct": "AI-generated imagery that could be mistaken for real",
+                "explanation": "AI-generated imagery that could be mistaken for real (deepfakes) must be disclosed to users to prevent deception and maintain trust."
             }
         ],
 
@@ -2633,6 +2801,18 @@ def _generate_quiz_questions(chapter_idx: int, section_title: str):
                 "options": ["Warning letter", "Fines up to €35 million or 7% of global turnover", "System shutdown", "Mandatory retraining"],
                 "correct": "Fines up to €35 million or 7% of global turnover",
                 "explanation": "Under the EU AI Act, high-risk AI systems without proper TDRs can face fines up to €35 million or 7% of global annual turnover, whichever is higher."
+            },
+            {
+                "question": "When should the TDR documentation begin?",
+                "options": ["After deployment", "During testing", "At initial design phase", "After model training"],
+                "correct": "At initial design phase",
+                "explanation": "The TDR must begin at the initial design phase, documenting every significant decision, test, and change throughout the entire lifecycle from design through operations."
+            },
+            {
+                "question": "What is the risk of defining success criteria after seeing model performance?",
+                "options": ["It takes more time", "You may set easier goals to match what the model achieved", "It violates privacy rules", "It increases training costs"],
+                "correct": "You may set easier goals to match what the model achieved",
+                "explanation": "Defining criteria after seeing performance creates the risk of reverse-engineering easier goals that match what your model happened to achieve, rather than defining what's truly needed for the use case."
             }
         ],
 
@@ -2654,6 +2834,18 @@ def _generate_quiz_questions(chapter_idx: int, section_title: str):
                 "options": ["Only data size", "Provenance, composition, quality issues, known biases", "Just the file names", "Only the collection date"],
                 "correct": "Provenance, composition, quality issues, known biases",
                 "explanation": "Data cards should comprehensively document provenance, size and composition, collection methodology, known biases, labeling process, and quality issues."
+            },
+            {
+                "question": "Why is documenting data coverage gaps important?",
+                "options": ["It's required by law", "Users can calibrate their trust appropriately", "It speeds up training", "It reduces liability"],
+                "correct": "Users can calibrate their trust appropriately",
+                "explanation": "Explicitly documenting coverage gaps and limitations allows users to understand where the model may be less reliable and calibrate their trust accordingly, rather than assuming the data is comprehensive."
+            },
+            {
+                "question": "What level of detail is required for model building documentation?",
+                "options": ["High-level overview only", "Enough for experts to reproduce the exact model", "Just hyperparameters", "Only the final accuracy"],
+                "correct": "Enough for experts to reproduce the exact model",
+                "explanation": "Documentation must be sufficiently detailed that an independent expert could reproduce your exact model and results, ensuring transparency and reproducibility."
             }
         ],
 
@@ -2676,6 +2868,18 @@ def _generate_quiz_questions(chapter_idx: int, section_title: str):
                 "options": ["Immediately", "After 24 hours", "After 7 days", "After 30 days"],
                 "correct": "After 24 hours",
                 "explanation": "According to the example, if Disparate Impact falls below 0.78 for 2 consecutive days (48 hours), it becomes critical and triggers VP escalation."
+            },
+            {
+                "question": "What is data distribution shift?",
+                "options": ["Moving data between servers", "Real-world data patterns changing over time", "Redistributing training data", "Changing data formats"],
+                "correct": "Real-world data patterns changing over time",
+                "explanation": "Data distribution shift occurs when the patterns in real-world data change over time, causing the distribution the model sees in production to differ from its training distribution, degrading performance."
+            },
+            {
+                "question": "Why is continuous monitoring necessary even for frozen models?",
+                "options": ["Models decay over time", "The world and user base evolve", "Hardware becomes outdated", "Regulations change"],
+                "correct": "The world and user base evolve",
+                "explanation": "Even if the model code is frozen, the world evolves - user bases change, feedback loops emerge, societal contexts shift - all causing the model's performance and fairness to degrade over time."
             }
         ],
 
@@ -2697,6 +2901,18 @@ def _generate_quiz_questions(chapter_idx: int, section_title: str):
                 "options": ["Nothing special", "Update the TDR before deployment", "Get CEO approval", "Retrain the model"],
                 "correct": "Update the TDR before deployment",
                 "explanation": "All changes require updating the Technology Development Record BEFORE deployment, maintaining an accurate, current record throughout the system's lifecycle."
+            },
+            {
+                "question": "What is included in quarterly assessments for high-risk AI systems?",
+                "options": ["Only performance metrics", "Performance, fairness, security, and compliance checks", "Just user feedback", "Only technical bugs"],
+                "correct": "Performance, fairness, security, and compliance checks",
+                "explanation": "Quarterly assessments comprehensively evaluate performance metrics, fairness indicators, security vulnerabilities, and ongoing compliance with regulations."
+            },
+            {
+                "question": "When must the TDR be updated?",
+                "options": ["Only at deployment", "Annually", "Before deploying any changes", "After incidents occur"],
+                "correct": "Before deploying any changes",
+                "explanation": "The TDR must be updated BEFORE deploying any changes to the AI system, maintaining a current and accurate record throughout the entire lifecycle."
             }
         ],
     }
@@ -2811,64 +3027,89 @@ def show_neom_training_pathway_page():
                 # Add quiz for this section
                 st.markdown("---")
                 st.markdown("### 📝 Knowledge Check Quiz")
+                st.markdown("*Select an answer for each question to see if you're correct!*")
 
                 # Initialize quiz state
                 if f"quiz_{step.id}" not in st.session_state:
-                    st.session_state[f"quiz_{step.id}"] = {"answers": {}, "submitted": False, "score": None}
+                    st.session_state[f"quiz_{step.id}"] = {"answers": {}}
 
                 quiz_state = st.session_state[f"quiz_{step.id}"]
 
                 # Generate quiz questions based on section content
                 quiz_questions = _generate_quiz_questions(idx, step.title)
 
-                if not quiz_state["submitted"]:
-                    # Show quiz questions
-                    for q_idx, question in enumerate(quiz_questions):
-                        st.markdown(f"**Question {q_idx + 1}:** {question['question']}")
-                        answer = st.radio(
-                            "Select your answer:",
-                            question['options'],
-                            key=f"quiz_{step.id}_q{q_idx}",
-                            index=None
-                        )
-                        quiz_state["answers"][q_idx] = answer
-                        st.markdown("")
+                # Show quiz questions with immediate feedback
+                for q_idx, question in enumerate(quiz_questions):
+                    st.markdown(f"**Question {q_idx + 1}:** {question['question']}")
 
-                    # Submit button
-                    if st.button("Submit Quiz", key=f"submit_quiz_{step.id}"):
-                        # Calculate score
-                        correct = sum(1 for q_idx, q in enumerate(quiz_questions)
-                                    if quiz_state["answers"].get(q_idx) == q['correct'])
-                        quiz_state["score"] = (correct / len(quiz_questions)) * 100
-                        quiz_state["submitted"] = True
-                        st.rerun()
-                else:
-                    # Show results
-                    score = quiz_state["score"]
-                    if score >= 80:
-                        st.success(f"🎉 Excellent! You scored {score:.0f}%")
-                    elif score >= 60:
-                        st.info(f"👍 Good job! You scored {score:.0f}%")
-                    else:
-                        st.warning(f"📖 You scored {score:.0f}%. Consider reviewing the material.")
+                    # Get the current answer for this question
+                    current_answer = quiz_state["answers"].get(q_idx)
 
-                    # Show correct answers
-                    with st.expander("View Correct Answers"):
-                        for q_idx, question in enumerate(quiz_questions):
-                            user_answer = quiz_state["answers"].get(q_idx, "Not answered")
-                            is_correct = user_answer == question['correct']
-                            st.markdown(f"**Q{q_idx + 1}:** {question['question']}")
-                            st.markdown(f"Your answer: {user_answer} {'✅' if is_correct else '❌'}")
-                            st.markdown(f"Correct answer: {question['correct']}")
-                            st.markdown(f"*Explanation:* {question['explanation']}")
-                            st.markdown("")
+                    # Display each option as a checkbox
+                    for option in question['options']:
+                        # Create a unique key for this checkbox
+                        checkbox_key = f"quiz_{step.id}_q{q_idx}_{option}"
 
-                    # Retake button
-                    if st.button("Retake Quiz", key=f"retake_quiz_{step.id}"):
-                        quiz_state["answers"] = {}
-                        quiz_state["submitted"] = False
-                        quiz_state["score"] = None
-                        st.rerun()
+                        # Determine if this option is selected
+                        is_selected = (current_answer == option)
+
+                        # Create columns for checkbox and feedback
+                        col1, col2 = st.columns([0.9, 0.1])
+
+                        with col1:
+                            # When checkbox is clicked, update the answer
+                            if st.checkbox(option, value=is_selected, key=checkbox_key):
+                                # User selected this option
+                                quiz_state["answers"][q_idx] = option
+                                # Uncheck other options by triggering a rerun
+                                if current_answer != option:
+                                    st.rerun()
+                            elif is_selected:
+                                # User unchecked the currently selected option
+                                quiz_state["answers"][q_idx] = None
+                                st.rerun()
+
+                        with col2:
+                            # Show tick or cross if this option is selected
+                            if is_selected:
+                                if option == question['correct']:
+                                    st.markdown("✅")
+                                else:
+                                    st.markdown("❌")
+
+                    # Show explanation if an answer has been selected
+                    if current_answer is not None:
+                        if current_answer == question['correct']:
+                            st.success("Correct! " + question['explanation'])
+                        else:
+                            st.error(f"Incorrect. The correct answer is: **{question['correct']}**")
+                            st.info(question['explanation'])
+
+                    st.markdown("")
+
+                # Calculate and show progress
+                answered = sum(1 for q_idx in range(len(quiz_questions))
+                             if quiz_state["answers"].get(q_idx) is not None)
+                correct = sum(1 for q_idx, q in enumerate(quiz_questions)
+                            if quiz_state["answers"].get(q_idx) == q['correct'])
+
+                if answered > 0:
+                    st.markdown(f"**Progress:** {answered}/{len(quiz_questions)} questions answered")
+                    if answered == len(quiz_questions):
+                        score = (correct / len(quiz_questions)) * 100
+                        if score == 100:
+                            st.success(f"🎉 Perfect score! You got all {len(quiz_questions)} questions correct!")
+                        elif score >= 80:
+                            st.success(f"🎉 Excellent! You scored {score:.0f}% ({correct}/{len(quiz_questions)})")
+                        elif score >= 60:
+                            st.info(f"👍 Good job! You scored {score:.0f}% ({correct}/{len(quiz_questions)})")
+                        else:
+                            st.warning(f"📖 You scored {score:.0f}% ({correct}/{len(quiz_questions)}). Consider reviewing the material.")
+
+                        # Reset button
+                        if st.button("Reset Quiz", key=f"reset_quiz_{step.id}"):
+                            quiz_state["answers"] = {}
+                            st.rerun()
 
                 st.markdown("---")
 
