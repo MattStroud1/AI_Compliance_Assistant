@@ -7,11 +7,12 @@ from datetime import datetime
 
 
 class PathwayType(str, Enum):
-    """Four main pathways for AI compliance"""
+    """Five main pathways for AI compliance"""
     BUILDING = "building"
     PROCURING = "procuring"
     OPERATING = "operating"
     TRAINING = "training"
+    ENTERPRISE_RISK_MANAGEMENT = "enterprise_risk_management"
 
 
 class RegulatoryFramework(str, Enum):
@@ -291,3 +292,152 @@ class TaskReference(BaseModel):
     phase: PhaseType
     mandatory: bool = True
     evidence_required: List[EvidenceType] = Field(default_factory=list)
+
+
+# ============================================================================
+# ENTERPRISE RISK MANAGEMENT MODELS
+# ============================================================================
+
+class RiskCategory(str, Enum):
+    """Categories of construction/project risks"""
+    SAFETY = "safety"
+    FINANCIAL = "financial"
+    SCHEDULE = "schedule"
+    QUALITY = "quality"
+    ENVIRONMENTAL = "environmental"
+    LEGAL_REGULATORY = "legal_regulatory"
+    TECHNICAL = "technical"
+    STAKEHOLDER = "stakeholder"
+    RESOURCE = "resource"
+    OTHER = "other"
+
+
+class RiskSeverity(str, Enum):
+    """Risk severity levels"""
+    LOW = "low"
+    MEDIUM = "medium"
+    HIGH = "high"
+    CRITICAL = "critical"
+
+
+class ControlType(str, Enum):
+    """Types of controls"""
+    PREVENTIVE = "preventive"
+    DETECTIVE = "detective"
+    CORRECTIVE = "corrective"
+    DIRECTIVE = "directive"
+
+
+class ProjectActivity(BaseModel):
+    """An activity within a project phase"""
+    id: str
+    phase_id: str
+    name: str
+    description: Optional[str] = None
+    order: int
+    duration_days: Optional[int] = None
+    responsible_party: Optional[str] = None
+    explicit: bool = True  # False if implicitly derived by AI
+
+
+class IdentifiedRisk(BaseModel):
+    """A risk identified for an activity"""
+    id: str
+    activity_id: str
+    risk_description: str
+    category: RiskCategory
+    likelihood: int = Field(ge=1, le=5)  # 1=Very Low, 5=Very High
+    impact: int = Field(ge=1, le=5)  # 1=Very Low, 5=Very High
+    inherent_risk_score: int = 0  # likelihood × impact
+    source: str = "ai_generated"  # ai_generated, user_added, knowledge_base
+    knowledge_base_ref: Optional[str] = None  # Reference to row in Excel
+
+
+class MitigatingMeasure(BaseModel):
+    """A measure to mitigate a risk"""
+    id: str
+    risk_id: str
+    measure_description: str
+    responsible_party: Optional[str] = None
+    timeline: Optional[str] = None
+    cost_estimate: Optional[float] = None
+    effectiveness_rating: int = Field(ge=1, le=5, default=3)  # How effective this mitigation is
+    implementation_status: str = "planned"  # planned, in_progress, implemented
+
+
+class ControlMapping(BaseModel):
+    """A control mapped to a mitigated risk"""
+    id: str
+    risk_id: str
+    mitigation_id: str
+    control_name: str
+    control_type: ControlType
+    control_description: Optional[str] = None
+    frequency: Optional[str] = None  # e.g., "Daily", "Monthly", "As needed"
+    control_owner: Optional[str] = None
+    knowledge_base_ref: Optional[str] = None  # Reference to GRC Controls KB
+
+
+class ResidualRiskAssessment(BaseModel):
+    """Assessment of residual risk after controls"""
+    id: str
+    risk_id: str
+    residual_likelihood: int = Field(ge=1, le=5)
+    residual_impact: int = Field(ge=1, le=5)
+    residual_risk_score: int = 0  # residual_likelihood × residual_impact
+    risk_severity: RiskSeverity
+    control_effectiveness: int = Field(ge=1, le=5, default=3)
+    notes: Optional[str] = None
+
+
+class ERMProjectPhase(BaseModel):
+    """A phase in the ERM project (e.g., Planning, Construction, Commissioning)"""
+    id: str
+    project_id: str
+    name: str
+    description: Optional[str] = None
+    order: int
+    activities: List[ProjectActivity] = Field(default_factory=list)
+    start_date: Optional[datetime] = None
+    end_date: Optional[datetime] = None
+
+
+class ERMProject(BaseModel):
+    """An Enterprise Risk Management project"""
+    project_id: str
+    project_name: str
+    project_description: Optional[str] = None
+
+    # Phases and activities (Step 1)
+    phases: List[ERMProjectPhase] = Field(default_factory=list)
+
+    # Risks (Step 2)
+    risks: List[IdentifiedRisk] = Field(default_factory=list)
+
+    # Mitigating measures (Step 3)
+    mitigations: List[MitigatingMeasure] = Field(default_factory=list)
+
+    # Controls (Step 4)
+    controls: List[ControlMapping] = Field(default_factory=list)
+
+    # Residual risk assessments (Step 5)
+    residual_risks: List[ResidualRiskAssessment] = Field(default_factory=list)
+
+    # Uploaded documents used for analysis
+    documents: List[Document] = Field(default_factory=list)
+
+    # Knowledge base files
+    risk_register_path: Optional[str] = None
+    controls_kb_path: Optional[str] = None
+
+    # Workflow state
+    current_step: int = 1  # 1-5
+    step_1_completed: bool = False
+    step_2_completed: bool = False
+    step_3_completed: bool = False
+    step_4_completed: bool = False
+    step_5_completed: bool = False
+
+    # Timestamps
+    created_at: datetime = Field(default_factory=datetime.now)
+    updated_at: datetime = Field(default_factory=datetime.now)

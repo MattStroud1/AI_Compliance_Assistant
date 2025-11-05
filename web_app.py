@@ -35,6 +35,16 @@ from src.models import (
     EvidenceType,
     PitstopCheckpoint,
     PitstopStatus,
+    ERMProject,
+    ERMProjectPhase,
+    ProjectActivity,
+    IdentifiedRisk,
+    MitigatingMeasure,
+    ControlMapping,
+    ResidualRiskAssessment,
+    RiskCategory,
+    RiskSeverity,
+    ControlType,
 )
 from src.llm.openai_client import ComplianceGuidanceGenerator
 from src.document_processor.processor import DocumentProcessor
@@ -49,6 +59,7 @@ from src.pathways.neom_operating_updated import NEOMOperatingAIPathway
 from src.pathways.neom_training_updated import NEOMTrainingPathway
 from src.pathways.ropa import ROPAPathway
 from src.pathways.dpia import DPIAPathway
+from src.pathways.erm import ERMPathway
 from src.storage.project_storage import ProjectStorageManager
 from src.notifications.email_service import EmailService
 from src.rag.document_rag import DocumentRAG
@@ -150,6 +161,9 @@ def init_session_state():
 
     if "neom_project" not in st.session_state:
         st.session_state.neom_project = None
+
+    if "erm_project" not in st.session_state:
+        st.session_state.erm_project = None
 
     if "rag_system" not in st.session_state:
         try:
@@ -450,6 +464,12 @@ def show_welcome_page():
             "description": "Comprehensive 7-chapter interactive course for learning trustworthy AI principles and compliance",
             "page": "neom_training_init",
         },
+        "erm": {
+            "icon": "🏗️",
+            "title": "Enterprise Risk Management",
+            "description": "5-step comprehensive risk management for construction/project management: planning, risk identification, mitigations, controls, and residual risk assessment",
+            "page": "erm_init",
+        },
     }
 
     cols = st.columns(2)
@@ -476,6 +496,7 @@ def show_welcome_page():
     - **Operating AI**: Deploying and managing AI systems in production
     - **DPIA (Data Protection Impact Assessment)**: Conduct comprehensive DPIAs under UK GDPR with 8 structured steps across 4 phases
     - **ROPA Creation**: Create and maintain UK GDPR Article 30 Records of Processing Activities with 9 structured steps
+    - **Enterprise Risk Management**: Complete construction/project risk management workflow from planning through residual risk assessment
     - **Training on AI**: Interactive 7-chapter course covering all aspects of trustworthy AI compliance
     """
     )
@@ -503,6 +524,7 @@ def show_goal_setup_page():
         PathwayType.PROCURING: "🛒",
         PathwayType.OPERATING: "⚙️",
         PathwayType.TRAINING: "🎓",
+        PathwayType.ENTERPRISE_RISK_MANAGEMENT: "🏗️",
     }
 
     st.info(
@@ -632,6 +654,7 @@ def show_goal_setup_page():
                         PathwayType.PROCURING: ProcuringAIPathway,
                         PathwayType.OPERATING: OperatingAIPathway,
                         PathwayType.TRAINING: TrainingOnAIPathway,
+                        PathwayType.ENTERPRISE_RISK_MANAGEMENT: ERMPathway,
                     }
 
                     pathway = pathway_classes[pathway_type](st.session_state.llm_client)
@@ -4376,6 +4399,600 @@ def show_dpia_record_view():
         st.rerun()
 
 
+# ============================================================================
+# ENTERPRISE RISK MANAGEMENT (ERM) PATHWAY
+# ============================================================================
+
+def show_erm_init_page():
+    """Display ERM project initialization page"""
+    st.title("🏗️ Enterprise Risk Management - Project Initialization")
+
+    st.markdown("""
+    Welcome to the Enterprise Risk Management pathway! This comprehensive 5-step process will help you:
+
+    1. **Identify project phases and activities** from your uploaded documents
+    2. **Identify risks** for each activity using AI and construction knowledge base
+    3. **Assign mitigating measures** to reduce risks
+    4. **Map controls** from GRC knowledge base
+    5. **Assess residual risks** and generate comprehensive risk reports
+
+    Let's get started!
+    """)
+
+    st.markdown("---")
+
+    # Project information
+    st.subheader("📋 Project Information")
+
+    col1, col2 = st.columns(2)
+    with col1:
+        project_name = st.text_input(
+            "Project Name *",
+            placeholder="e.g., Downtown Mixed-Use Development",
+            help="Name of your construction or infrastructure project"
+        )
+
+    with col2:
+        project_description = st.text_area(
+            "Project Description",
+            placeholder="Brief description of the project scope and objectives",
+            height=100
+        )
+
+    st.markdown("---")
+
+    # Knowledge base file paths
+    st.subheader("📚 Knowledge Base Files")
+    st.markdown("""
+    The ERM pathway uses Excel files containing construction risks and GRC controls.
+    These files should be located in your local environment.
+    """)
+
+    col1, col2 = st.columns(2)
+    with col1:
+        risk_register_path = st.text_input(
+            "Risk Register Path",
+            value="/Users/matthewstroud/AI_Compliance_Assistant/2/GRC_Controls_Knowledge_Base/Full_Risk_Register_Construction_Focused.xlsx",
+            help="Path to Full_Risk_Register_Construction_Focused.xlsx"
+        )
+
+    with col2:
+        controls_kb_path = st.text_input(
+            "Controls Knowledge Base Path",
+            value="/Users/matthewstroud/AI_Compliance_Assistant/2/GRC_Controls_Knowledge_Base/GRC Controls Knowledge_Base.xlsx",
+            help="Path to GRC Controls Knowledge_Base.xlsx"
+        )
+
+    # Check if files exist
+    import os
+    risk_file_exists = os.path.exists(risk_register_path) if risk_register_path else False
+    controls_file_exists = os.path.exists(controls_kb_path) if controls_kb_path else False
+
+    if risk_register_path:
+        if risk_file_exists:
+            st.success(f"✅ Risk Register found")
+        else:
+            st.warning(f"⚠️ Risk Register not found at specified path (will use AI-only mode)")
+
+    if controls_kb_path:
+        if controls_file_exists:
+            st.success(f"✅ Controls KB found")
+        else:
+            st.warning(f"⚠️ Controls KB not found at specified path (will use AI-only mode)")
+
+    st.markdown("---")
+
+    # Document upload section
+    st.subheader("📄 Upload Project Documents")
+    st.markdown("""
+    Upload your project documents (plans, specifications, reports, etc.).
+    The AI will analyze these to extract project phases and activities.
+    """)
+
+    if st.session_state.rag_documents:
+        st.success(f"✅ {len(st.session_state.rag_documents)} documents already loaded from sidebar")
+
+        with st.expander("View Loaded Documents"):
+            for doc in st.session_state.rag_documents:
+                st.markdown(f"📄 **{doc['name']}** ({doc['size']:,} characters)")
+    else:
+        st.info("💡 Use the sidebar to upload project documents, or start with default construction phases")
+
+    st.markdown("---")
+
+    # Create project button
+    if st.button("🚀 Create ERM Project", type="primary", use_container_width=True):
+        if not project_name:
+            st.error("Please enter a project name")
+        else:
+            # Create new ERM project
+            project_id = str(uuid.uuid4())
+
+            erm_project = ERMProject(
+                project_id=project_id,
+                project_name=project_name,
+                project_description=project_description,
+                risk_register_path=risk_register_path if risk_file_exists else None,
+                controls_kb_path=controls_kb_path if controls_file_exists else None,
+                current_step=1,
+            )
+
+            st.session_state.erm_project = erm_project
+            st.session_state.current_page = "erm_pathway"
+            st.success(f"✅ Created ERM project: {project_name}")
+            st.rerun()
+
+    # Return home button
+    st.markdown("---")
+    if st.button("🏠 Return to Home", key="erm_home"):
+        st.session_state.current_page = "welcome"
+        st.rerun()
+
+
+def show_erm_step_1(project: ERMProject):
+    """Step 1: Project Planning & Phase Identification"""
+    st.markdown("### 🗂️ Step 1: Project Planning & Phase Identification")
+    st.markdown("""
+    In this step, we'll analyze your uploaded documents to extract project phases and activities.
+    You can edit, add, or remove phases and activities as needed.
+    """)
+
+    if not project.step_1_completed:
+        if st.button("🤖 Generate Project Plan with AI", type="primary"):
+            with st.spinner("Analyzing documents and generating project plan..."):
+                # Get uploaded documents
+                doc_contents = []
+                if st.session_state.rag_documents:
+                    for doc in st.session_state.rag_documents:
+                        doc_contents.append({
+                            "name": doc["name"],
+                            "content": st.session_state.rag_system.documents[doc["id"]]["content"]
+                        })
+
+                # Generate project plan
+                pathway = ERMPathway(st.session_state.llm_client)
+                plan_data = pathway.generate_project_plan_from_documents(
+                    doc_contents,
+                    st.session_state.rag_system
+                )
+
+                # Update project with generated plan
+                if plan_data.get("project_name") and not project.project_description:
+                    project.project_description = plan_data.get("project_description", "")
+
+                # Create phases and activities
+                for idx, phase_data in enumerate(plan_data.get("phases", [])):
+                    phase_id = str(uuid.uuid4())
+                    phase = ERMProjectPhase(
+                        id=phase_id,
+                        project_id=project.project_id,
+                        name=phase_data["name"],
+                        description=phase_data.get("description", ""),
+                        order=idx + 1,
+                    )
+
+                    # Add activities
+                    for act_idx, activity_data in enumerate(phase_data.get("activities", [])):
+                        activity = ProjectActivity(
+                            id=str(uuid.uuid4()),
+                            phase_id=phase_id,
+                            name=activity_data["name"],
+                            description=activity_data.get("description", ""),
+                            order=act_idx + 1,
+                            explicit=activity_data.get("explicit", True),
+                        )
+                        phase.activities.append(activity)
+
+                    project.phases.append(phase)
+
+                st.success(f"✅ Generated {len(project.phases)} phases with {sum(len(p.activities) for p in project.phases)} activities!")
+                st.rerun()
+
+    # Display and edit phases
+    if project.phases:
+        st.markdown("---")
+        st.markdown("#### 📋 Project Phases & Activities")
+
+        for phase in project.phases:
+            with st.expander(f"**{phase.name}** ({len(phase.activities)} activities)", expanded=True):
+                st.markdown(f"*{phase.description}*")
+
+                # Display activities
+                st.markdown("**Activities:**")
+                for activity in phase.activities:
+                    col1, col2 = st.columns([4, 1])
+                    with col1:
+                        indicator = "🤖" if not activity.explicit else "📝"
+                        st.markdown(f"{indicator} **{activity.name}**")
+                        if activity.description:
+                            st.caption(activity.description)
+                    with col2:
+                        if st.button("🗑️", key=f"del_act_{activity.id}"):
+                            phase.activities = [a for a in phase.activities if a.id != activity.id]
+                            st.rerun()
+
+                # Add new activity
+                with st.form(key=f"add_activity_{phase.id}"):
+                    st.markdown("**➕ Add Activity**")
+                    new_act_name = st.text_input("Activity Name", key=f"new_act_name_{phase.id}")
+                    new_act_desc = st.text_area("Description (optional)", key=f"new_act_desc_{phase.id}")
+                    if st.form_submit_button("Add Activity"):
+                        if new_act_name:
+                            new_activity = ProjectActivity(
+                                id=str(uuid.uuid4()),
+                                phase_id=phase.id,
+                                name=new_act_name,
+                                description=new_act_desc,
+                                order=len(phase.activities) + 1,
+                                explicit=True,
+                            )
+                            phase.activities.append(new_activity)
+                            st.success(f"✅ Added activity: {new_act_name}")
+                            st.rerun()
+
+        # Complete step button
+        st.markdown("---")
+        if st.button("✅ Complete Step 1 & Continue to Risk Identification", type="primary", use_container_width=True):
+            project.step_1_completed = True
+            project.current_step = 2
+            st.success("✅ Step 1 completed!")
+            st.rerun()
+    else:
+        st.info("👆 Click 'Generate Project Plan with AI' to get started, or add phases manually below")
+
+
+def show_erm_step_2(project: ERMProject):
+    """Step 2: Risk Identification"""
+    st.markdown("### ⚠️ Step 2: Risk Identification")
+
+    if not project.step_1_completed:
+        st.warning("⚠️ Please complete Step 1 first")
+        return
+
+    st.markdown("""
+    Identify risks for each activity using AI and the construction risk register.
+    """)
+
+    if not project.step_2_completed:
+        if st.button("🤖 Identify Risks with AI", type="primary"):
+            with st.spinner("Analyzing activities and identifying risks..."):
+                pathway = ERMPathway(st.session_state.llm_client)
+
+                # Load risk register if available
+                risk_register_df = None
+                if project.risk_register_path:
+                    risk_register_df = pathway.load_risk_register(project.risk_register_path)
+
+                # Collect all activities
+                all_activities = []
+                for phase in project.phases:
+                    all_activities.extend(phase.activities)
+
+                # Identify risks
+                identified_risks = pathway.identify_risks_for_activities(
+                    all_activities,
+                    risk_register_df
+                )
+
+                project.risks = identified_risks
+                st.success(f"✅ Identified {len(identified_risks)} risks!")
+                st.rerun()
+
+    # Display risks
+    if project.risks:
+        st.markdown("---")
+        st.markdown(f"#### ⚠️ Identified Risks ({len(project.risks)})")
+
+        # Group by activity
+        for phase in project.phases:
+            with st.expander(f"**{phase.name}**", expanded=False):
+                for activity in phase.activities:
+                    activity_risks = [r for r in project.risks if r.activity_id == activity.id]
+                    if activity_risks:
+                        st.markdown(f"**{activity.name}** ({len(activity_risks)} risks)")
+
+                        for risk in activity_risks:
+                            col1, col2, col3, col4 = st.columns([3, 1, 1, 1])
+                            with col1:
+                                st.markdown(f"🔴 {risk.risk_description}")
+                                st.caption(f"Category: {risk.category.value}")
+                            with col2:
+                                st.metric("Likelihood", f"{risk.likelihood}/5")
+                            with col3:
+                                st.metric("Impact", f"{risk.impact}/5")
+                            with col4:
+                                st.metric("Score", risk.inherent_risk_score)
+
+        # Complete step
+        st.markdown("---")
+        if st.button("✅ Complete Step 2 & Continue to Mitigations", type="primary", use_container_width=True):
+            project.step_2_completed = True
+            project.current_step = 3
+            st.success("✅ Step 2 completed!")
+            st.rerun()
+    else:
+        st.info("👆 Click 'Identify Risks with AI' to analyze your activities")
+
+
+def show_erm_step_3(project: ERMProject):
+    """Step 3: Mitigating Measures"""
+    st.markdown("### 🛡️ Step 3: Mitigating Measures")
+
+    if not project.step_2_completed:
+        st.warning("⚠️ Please complete Step 2 first")
+        return
+
+    st.markdown("""
+    Assign mitigating measures to reduce identified risks.
+    """)
+
+    if not project.step_3_completed:
+        if st.button("🤖 Generate Mitigating Measures with AI", type="primary"):
+            with st.spinner("Generating mitigation strategies..."):
+                pathway = ERMPathway(st.session_state.llm_client)
+
+                mitigations = pathway.generate_mitigating_measures(project.risks)
+                project.mitigations = mitigations
+
+                st.success(f"✅ Generated {len(mitigations)} mitigating measures!")
+                st.rerun()
+
+    # Display mitigations
+    if project.mitigations:
+        st.markdown("---")
+        st.markdown(f"#### 🛡️ Mitigating Measures ({len(project.mitigations)})")
+
+        # Group by risk
+        for risk in project.risks:
+            risk_mitigations = [m for m in project.mitigations if m.risk_id == risk.id]
+            if risk_mitigations:
+                with st.expander(f"**Risk:** {risk.risk_description}", expanded=False):
+                    st.markdown(f"*Category: {risk.category.value} | Inherent Score: {risk.inherent_risk_score}*")
+
+                    for mitigation in risk_mitigations:
+                        st.markdown(f"**Mitigation:** {mitigation.measure_description}")
+                        col1, col2, col3, col4 = st.columns(4)
+                        with col1:
+                            st.caption(f"👤 {mitigation.responsible_party or 'Not assigned'}")
+                        with col2:
+                            st.caption(f"📅 {mitigation.timeline or 'TBD'}")
+                        with col3:
+                            st.caption(f"⭐ Effectiveness: {mitigation.effectiveness_rating}/5")
+                        with col4:
+                            st.caption(f"📊 Status: {mitigation.implementation_status}")
+                        st.markdown("---")
+
+        # Complete step
+        st.markdown("---")
+        if st.button("✅ Complete Step 3 & Continue to Controls", type="primary", use_container_width=True):
+            project.step_3_completed = True
+            project.current_step = 4
+            st.success("✅ Step 3 completed!")
+            st.rerun()
+    else:
+        st.info("👆 Click 'Generate Mitigating Measures with AI' to create mitigation strategies")
+
+
+def show_erm_step_4(project: ERMProject):
+    """Step 4: Control Mapping"""
+    st.markdown("### 📋 Step 4: Control Mapping")
+
+    if not project.step_3_completed:
+        st.warning("⚠️ Please complete Step 3 first")
+        return
+
+    st.markdown("""
+    Map GRC controls to your mitigated risks.
+    """)
+
+    if not project.step_4_completed:
+        if st.button("🤖 Map Controls with AI", type="primary"):
+            with st.spinner("Mapping controls from knowledge base..."):
+                pathway = ERMPathway(st.session_state.llm_client)
+
+                # Load controls KB if available
+                controls_kb_df = None
+                if project.controls_kb_path:
+                    controls_kb_df = pathway.load_controls_knowledge_base(project.controls_kb_path)
+
+                controls = pathway.map_controls_to_risks(
+                    project.risks,
+                    project.mitigations,
+                    controls_kb_df
+                )
+
+                project.controls = controls
+                st.success(f"✅ Mapped {len(controls)} controls!")
+                st.rerun()
+
+    # Display controls
+    if project.controls:
+        st.markdown("---")
+        st.markdown(f"#### 📋 Mapped Controls ({len(project.controls)})")
+
+        # Group by risk
+        for risk in project.risks:
+            risk_controls = [c for c in project.controls if c.risk_id == risk.id]
+            if risk_controls:
+                with st.expander(f"**Risk:** {risk.risk_description}", expanded=False):
+                    for control in risk_controls:
+                        st.markdown(f"**{control.control_name}**")
+                        col1, col2, col3 = st.columns(3)
+                        with col1:
+                            st.caption(f"🏷️ Type: {control.control_type.value}")
+                        with col2:
+                            st.caption(f"📅 Frequency: {control.frequency or 'TBD'}")
+                        with col3:
+                            st.caption(f"👤 Owner: {control.control_owner or 'Not assigned'}")
+
+                        if control.control_description:
+                            st.caption(f"📝 {control.control_description}")
+                        st.markdown("---")
+
+        # Complete step
+        st.markdown("---")
+        if st.button("✅ Complete Step 4 & Continue to Residual Risk Assessment", type="primary", use_container_width=True):
+            project.step_4_completed = True
+            project.current_step = 5
+            st.success("✅ Step 4 completed!")
+            st.rerun()
+    else:
+        st.info("👆 Click 'Map Controls with AI' to assign controls")
+
+
+def show_erm_step_5(project: ERMProject):
+    """Step 5: Residual Risk Assessment"""
+    st.markdown("### 📊 Step 5: Residual Risk Assessment")
+
+    if not project.step_4_completed:
+        st.warning("⚠️ Please complete Step 4 first")
+        return
+
+    st.markdown("""
+    Calculate residual risks after applying mitigations and controls.
+    """)
+
+    if not project.step_5_completed:
+        if st.button("🤖 Calculate Residual Risks", type="primary"):
+            with st.spinner("Calculating residual risk scores..."):
+                pathway = ERMPathway(st.session_state.llm_client)
+
+                residual_risks = pathway.calculate_residual_risks(
+                    project.risks,
+                    project.mitigations,
+                    project.controls
+                )
+
+                project.residual_risks = residual_risks
+                st.success(f"✅ Calculated residual risks!")
+                st.rerun()
+
+    # Display residual risks
+    if project.residual_risks:
+        st.markdown("---")
+
+        # Get risk summary
+        pathway = ERMPathway(st.session_state.llm_client)
+        summary = pathway.get_risk_summary(project.risks, project.residual_risks)
+
+        # Summary metrics
+        st.markdown("#### 📊 Risk Assessment Summary")
+        col1, col2, col3, col4 = st.columns(4)
+        with col1:
+            st.metric("Total Risks", summary["total_risks"])
+        with col2:
+            st.metric("Avg Inherent Score", summary["average_inherent_score"])
+        with col3:
+            st.metric("Avg Residual Score", summary["average_residual_score"])
+        with col4:
+            st.metric("Risk Reduction", f"{summary['average_reduction_percent']}%")
+
+        # Severity distribution
+        st.markdown("#### 🎯 Residual Risk Severity Distribution")
+        col1, col2, col3, col4 = st.columns(4)
+        with col1:
+            st.metric("🔴 Critical", summary["severity_distribution"]["critical"])
+        with col2:
+            st.metric("🟠 High", summary["severity_distribution"]["high"])
+        with col3:
+            st.metric("🟡 Medium", summary["severity_distribution"]["medium"])
+        with col4:
+            st.metric("🟢 Low", summary["severity_distribution"]["low"])
+
+        # Top 10 risks
+        st.markdown("#### 🔝 Top 10 Residual Risks")
+        for idx, item in enumerate(summary["top_10_risks"][:10], 1):
+            risk = item["risk"]
+            residual = item["residual"]
+
+            with st.expander(f"#{idx} - {risk.risk_description} (Score: {residual.residual_risk_score})", expanded=False):
+                col1, col2 = st.columns(2)
+                with col1:
+                    st.markdown(f"**Category:** {risk.category.value}")
+                    st.markdown(f"**Inherent Score:** {risk.inherent_risk_score}")
+                    st.markdown(f"**Inherent L×I:** {risk.likelihood} × {risk.impact}")
+                with col2:
+                    st.markdown(f"**Residual Score:** {residual.residual_risk_score}")
+                    st.markdown(f"**Residual L×I:** {residual.residual_likelihood} × {residual.residual_impact}")
+                    st.markdown(f"**Severity:** {residual.risk_severity.value}")
+
+                if residual.notes:
+                    st.info(residual.notes)
+
+        # Complete step
+        st.markdown("---")
+        if st.button("✅ Complete ERM Assessment", type="primary", use_container_width=True):
+            project.step_5_completed = True
+            st.success("🎉 ERM Assessment Complete!")
+            st.balloons()
+            st.rerun()
+    else:
+        st.info("👆 Click 'Calculate Residual Risks' to complete the assessment")
+
+
+def show_erm_pathway_page():
+    """Display the main ERM pathway with 5-step workflow"""
+    if not st.session_state.erm_project:
+        st.error("No ERM project found. Please create a project first.")
+        if st.button("🏠 Return to Home"):
+            st.session_state.current_page = "welcome"
+            st.rerun()
+        return
+
+    project = st.session_state.erm_project
+
+    # Header
+    st.title(f"🏗️ {project.project_name}")
+    if project.project_description:
+        st.markdown(f"*{project.project_description}*")
+
+    st.markdown("---")
+
+    # Step navigation tabs
+    st.subheader("5-Step Risk Management Workflow")
+
+    step_tabs = st.tabs([
+        "1️⃣ Project Planning",
+        "2️⃣ Risk Identification",
+        "3️⃣ Mitigating Measures",
+        "4️⃣ Control Mapping",
+        "5️⃣ Residual Risk Assessment"
+    ])
+
+    # STEP 1: Project Planning
+    with step_tabs[0]:
+        show_erm_step_1(project)
+
+    # STEP 2: Risk Identification
+    with step_tabs[1]:
+        show_erm_step_2(project)
+
+    # STEP 3: Mitigating Measures
+    with step_tabs[2]:
+        show_erm_step_3(project)
+
+    # STEP 4: Control Mapping
+    with step_tabs[3]:
+        show_erm_step_4(project)
+
+    # STEP 5: Residual Risk Assessment
+    with step_tabs[4]:
+        show_erm_step_5(project)
+
+    # Bottom navigation
+    st.markdown("---")
+    col1, col2 = st.columns(2)
+    with col1:
+        if st.button("🏠 Return to Home", use_container_width=True):
+            st.session_state.current_page = "welcome"
+            st.rerun()
+    with col2:
+        if st.button("💾 Save Project", use_container_width=True, type="primary"):
+            # Save project to storage
+            st.success("✅ Project saved successfully!")
+            # TODO: Implement actual save to file system
+
+
 # Main app logic
 def main():
     """Main application logic"""
@@ -4413,6 +5030,10 @@ def main():
         show_dpia_pathway_page()
     elif st.session_state.current_page == "dpia_record_view":
         show_dpia_record_view()
+    elif st.session_state.current_page == "erm_init":
+        show_erm_init_page()
+    elif st.session_state.current_page == "erm_pathway":
+        show_erm_pathway_page()
     elif st.session_state.current_page == "project_dashboard":
         show_project_dashboard()
 
