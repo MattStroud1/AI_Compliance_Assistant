@@ -1651,83 +1651,87 @@ def show_neom_pitstops_view(project: NEOMProject):
                 st.text_area("", value=pitstop.approval_notes, key=f"notes_{pitstop.id}", disabled=True)
 
 
-def show_project_dashboard():
-    """Display project dashboard with status matrix"""
-    # Return to home button
-    if st.button("🏠 Return to Home Page", key="home_dashboard"):
-        st.session_state.current_page = "welcome"
-        st.rerun()
+def _identify_pathway_type(project):
+    """Identify the pathway type based on phase names"""
+    if not project.phases:
+        return "unknown"
 
-    st.title("📊 All Projects Dashboard")
-    st.markdown("Overview of all NEOM Trustworthy AI projects and their progress")
+    # Check first phase name to identify pathway
+    first_phase_name = project.phases[0].name if project.phases else ""
+    num_phases = len(project.phases)
 
-    # Load all projects
-    project_list = st.session_state.storage_manager.list_all_projects()
+    # ROPA pathway - 4 phases starting with "Phase 1: Planning & Scoping"
+    if "Phase 1: Planning & Scoping" in first_phase_name or "ROPA" in project.project_name.upper():
+        return "ropa"
 
-    if not project_list:
-        st.info("No projects found. Create a new project to get started!")
+    # Procuring pathway - 7 phases starting with "Project Setup & Assessment"
+    if first_phase_name == "Project Setup & Assessment" or num_phases == 7:
+        if "Procuring" in project.project_name or "Procurement" in project.project_name:
+            return "procuring"
+        # Check if it's operating by looking at first phase name more carefully
+        if first_phase_name == "Project Setup & Documentation":
+            return "operating"
+        return "procuring"
+
+    # Operating pathway - 7 phases starting with "Project Setup & Documentation"
+    if first_phase_name == "Project Setup & Documentation":
+        return "operating"
+
+    # AI Build pathway - 4 phases (Planning & Design, Data Preparation, Build & Validate, Deployment & Monitoring)
+    if num_phases == 4 and any(p.phase_type == PhaseType.BUILD_VALIDATE for p in project.phases):
+        return "building"
+
+    return "building"  # Default to building
+
+
+def _render_project_matrix(projects, pathway_name, phase_configs, target_page):
+    """Render a project matrix for a specific pathway type
+
+    Args:
+        projects: List of projects for this pathway
+        pathway_name: Display name for the pathway (e.g., "AI Building Projects")
+        phase_configs: List of tuples (phase_name, phase_identifier) for column headers
+        target_page: Page to navigate to when clicking project (e.g., "neom_pathway")
+    """
+    if not projects:
         return
 
-    st.markdown(f"**Total Projects:** {len(project_list)}")
-    st.markdown("---")
-
-    # Define phase names and colors
-    phase_names = {
-        PhaseType.PLANNING_DESIGN: "Planning & Design",
-        PhaseType.DATA_PREPARATION: "Data Preparation",
-        PhaseType.BUILD_VALIDATE: "Build & Validate",
-        PhaseType.DEPLOYMENT_MONITORING: "Deployment & Monitoring"
-    }
-
-    # Create header row
-    st.markdown("### Project Status Matrix")
-    st.markdown("🔴 Not Started | 🟠 In Progress | 🟢 Completed")
+    st.markdown(f"### {pathway_name}")
+    st.markdown(f"**{len(projects)} project(s)**")
     st.markdown("---")
 
     # Create table header
-    header_cols = st.columns([3, 2, 2, 2, 2])
+    num_phases = len(phase_configs)
+    col_widths = [3] + [2] * num_phases
+    header_cols = st.columns(col_widths)
+
     with header_cols[0]:
         st.markdown("**Project Name**")
-    with header_cols[1]:
-        st.markdown("**Planning & Design**")
-    with header_cols[2]:
-        st.markdown("**Data Preparation**")
-    with header_cols[3]:
-        st.markdown("**Build & Validate**")
-    with header_cols[4]:
-        st.markdown("**Deployment & Monitoring**")
+
+    for idx, (phase_name, _) in enumerate(phase_configs):
+        with header_cols[idx + 1]:
+            st.markdown(f"**{phase_name}**")
 
     st.markdown("---")
 
     # Process each project
-    for proj_info in project_list:
-        project = st.session_state.storage_manager.load_project(proj_info['project_id'])
-
-        if not project:
-            continue
-
-        # Create row
-        cols = st.columns([3, 2, 2, 2, 2])
+    for project in projects:
+        cols = st.columns(col_widths)
 
         with cols[0]:
             # Make project name clickable
-            if st.button(f"📁 {project.project_name}", key=f"proj_{project.project_id}", use_container_width=True):
+            if st.button(f"📁 {project.project_name}",
+                        key=f"proj_{pathway_name}_{project.project_id}",
+                        use_container_width=True):
                 st.session_state.neom_project = project
-                st.session_state.current_page = "neom_pathway"
+                st.session_state.current_page = target_page
                 st.rerun()
             st.caption(f"{project.ai_system_name}")
 
         # Calculate status for each phase
-        phase_order = [
-            PhaseType.PLANNING_DESIGN,
-            PhaseType.DATA_PREPARATION,
-            PhaseType.BUILD_VALIDATE,
-            PhaseType.DEPLOYMENT_MONITORING
-        ]
-
-        for idx, phase_type in enumerate(phase_order):
-            # Find the phase in the project
-            phase = next((p for p in project.phases if p.phase_type == phase_type), None)
+        for idx, (phase_name, phase_identifier) in enumerate(phase_configs):
+            # Find the phase in the project by name
+            phase = next((p for p in project.phases if phase_identifier in p.name), None)
 
             if not phase or not phase.steps:
                 # No phase or steps - red
@@ -1753,49 +1757,157 @@ def show_project_dashboard():
                     status_text = f"Not Started (0/{total_steps})"
 
             with cols[idx + 1]:
-                st.markdown(f"<div style='text-align: center; font-size: 2em'>{status_circle}</div>", unsafe_allow_html=True)
+                st.markdown(f"<div style='text-align: center; font-size: 2em'>{status_circle}</div>",
+                          unsafe_allow_html=True)
                 st.caption(status_text)
 
         st.markdown("---")
 
+
+def show_project_dashboard():
+    """Display project dashboard with status matrix for all pathway types"""
+    # Return to home button
+    if st.button("🏠 Return to Home Page", key="home_dashboard"):
+        st.session_state.current_page = "welcome"
+        st.rerun()
+
+    st.title("📊 All Projects Dashboard")
+    st.markdown("Overview of all NEOM Trustworthy AI projects and their progress")
+
+    # Load all projects
+    project_list = st.session_state.storage_manager.list_all_projects()
+
+    if not project_list:
+        st.info("No projects found. Create a new project to get started!")
+        return
+
+    st.markdown(f"**Total Projects:** {len(project_list)}")
+    st.markdown("🔴 Not Started | 🟠 In Progress | 🟢 Completed")
+    st.markdown("---")
+
+    # Group projects by pathway type
+    projects_by_pathway = {
+        "building": [],
+        "procuring": [],
+        "operating": [],
+        "ropa": []
+    }
+
+    for proj_info in project_list:
+        project = st.session_state.storage_manager.load_project(proj_info['project_id'])
+        if project:
+            pathway_type = _identify_pathway_type(project)
+            projects_by_pathway[pathway_type].append(project)
+
+    # Render AI Building Projects matrix
+    if projects_by_pathway["building"]:
+        building_phases = [
+            ("Planning & Design", "Planning"),
+            ("Data Preparation", "Data Preparation"),
+            ("Build & Validate", "Build"),
+            ("Deployment & Monitoring", "Deployment")
+        ]
+        _render_project_matrix(
+            projects_by_pathway["building"],
+            "🏗️ AI Building Projects",
+            building_phases,
+            "neom_pathway"
+        )
+        st.markdown("<br>", unsafe_allow_html=True)
+
+    # Render AI Procurement Projects matrix
+    if projects_by_pathway["procuring"]:
+        procuring_phases = [
+            ("Setup", "Setup"),
+            ("Privacy", "Privacy"),
+            ("Security", "Security"),
+            ("Fairness", "Fairness"),
+            ("Explainability", "Explainability"),
+            ("Technology", "Technology"),
+            ("Monitoring", "Monitoring")
+        ]
+        _render_project_matrix(
+            projects_by_pathway["procuring"],
+            "🛒 AI Procurement Projects",
+            procuring_phases,
+            "neom_procuring_pathway"
+        )
+        st.markdown("<br>", unsafe_allow_html=True)
+
+    # Render AI Operations Projects matrix
+    if projects_by_pathway["operating"]:
+        operating_phases = [
+            ("Setup", "Setup"),
+            ("Privacy", "Privacy"),
+            ("Security", "Security"),
+            ("Fairness", "Fairness"),
+            ("Explainability", "Explainability"),
+            ("Technology", "Technology"),
+            ("Monitoring", "Monitoring")
+        ]
+        _render_project_matrix(
+            projects_by_pathway["operating"],
+            "⚙️ AI Operations Projects",
+            operating_phases,
+            "neom_operating_pathway"
+        )
+        st.markdown("<br>", unsafe_allow_html=True)
+
+    # Render ROPA Projects matrix
+    if projects_by_pathway["ropa"]:
+        ropa_phases = [
+            ("Planning", "Planning"),
+            ("Data Collection", "Data Collection"),
+            ("Documentation", "Documentation"),
+            ("Maintenance", "Maintenance")
+        ]
+        _render_project_matrix(
+            projects_by_pathway["ropa"],
+            "📋 ROPA Projects",
+            ropa_phases,
+            "ropa_pathway"
+        )
+        st.markdown("<br>", unsafe_allow_html=True)
+
     # Summary statistics
+    st.markdown("---")
     st.markdown("### Summary")
 
     # Calculate overall statistics
+    total_projects = sum(len(projects) for projects in projects_by_pathway.values())
     total_phases = 0
     completed_phases = 0
     in_progress_phases = 0
     not_started_phases = 0
 
-    for proj_info in project_list:
-        project = st.session_state.storage_manager.load_project(proj_info['project_id'])
-        if not project:
-            continue
+    for pathway_projects in projects_by_pathway.values():
+        for project in pathway_projects:
+            for phase in project.phases:
+                total_phases += 1
+                if phase.steps:
+                    total_steps = len(phase.steps)
+                    completed_steps = sum(1 for step in phase.steps if step.status == StepStatus.COMPLETED)
+                    in_progress_steps = sum(1 for step in phase.steps if step.status == StepStatus.IN_PROGRESS)
 
-        for phase in project.phases:
-            total_phases += 1
-            if phase.steps:
-                total_steps = len(phase.steps)
-                completed_steps = sum(1 for step in phase.steps if step.status == StepStatus.COMPLETED)
-                in_progress_steps = sum(1 for step in phase.steps if step.status == StepStatus.IN_PROGRESS)
-
-                if completed_steps == total_steps and total_steps > 0:
-                    completed_phases += 1
-                elif completed_steps > 0 or in_progress_steps > 0:
-                    in_progress_phases += 1
+                    if completed_steps == total_steps and total_steps > 0:
+                        completed_phases += 1
+                    elif completed_steps > 0 or in_progress_steps > 0:
+                        in_progress_phases += 1
+                    else:
+                        not_started_phases += 1
                 else:
                     not_started_phases += 1
-            else:
-                not_started_phases += 1
 
-    col1, col2, col3, col4 = st.columns(4)
+    col1, col2, col3, col4, col5 = st.columns(5)
     with col1:
-        st.metric("Total Phases", total_phases)
+        st.metric("Total Projects", total_projects)
     with col2:
-        st.metric("🟢 Completed", completed_phases)
+        st.metric("Total Phases", total_phases)
     with col3:
-        st.metric("🟠 In Progress", in_progress_phases)
+        st.metric("🟢 Completed", completed_phases)
     with col4:
+        st.metric("🟠 In Progress", in_progress_phases)
+    with col5:
         st.metric("🔴 Not Started", not_started_phases)
 
 
