@@ -1103,8 +1103,8 @@ def show_neom_phases_view(project: NEOMProject):
                             st.info(f"**Regulatory Requirement:**\n\n{step.description}")
 
                         st.markdown("**Checklist:**")
-                        for item in step.checklist_items:
-                            st.checkbox(item, key=f"check_{step.id}_{item[:30]}")
+                        for idx, item in enumerate(step.checklist_items):
+                            st.checkbox(item, key=f"check_{step.id}_{idx}_{item[:20]}")
 
                         # Check if this is a RACI-related question
                         if "RACI" in step.title or "raci" in step.title.lower():
@@ -2311,6 +2311,408 @@ def show_neom_training_init_page():
                 st.rerun()
 
 
+def _generate_quiz_questions(chapter_idx: int, section_title: str):
+    """Generate quiz questions for each training section"""
+    # Quiz questions bank organized by chapter and section
+    quiz_bank = {
+        # Chapter 1
+        (1, "Introduction & Overview - Why Trustworthy AI Matters"): [
+            {
+                "question": "What percentage of consumers say knowing a company's AI policies before purchasing is important?",
+                "options": ["52%", "62%", "72%", "82%"],
+                "correct": "72%",
+                "explanation": "72% of consumers say that knowing a company's AI policies before making a purchase is important, highlighting the business value of transparent AI practices."
+            },
+            {
+                "question": "How much faster do companies focused on data protection and AI Ethics grow on average?",
+                "options": ["1.2x faster", "1.4x faster", "1.6x faster", "2.0x faster"],
+                "correct": "1.6x faster",
+                "explanation": "Companies that prioritize data protection and AI ethics grow 1.6x faster on average, demonstrating a clear competitive advantage."
+            },
+            {
+                "question": "How many pages of requirements does the EU AI Act contain?",
+                "options": ["46 pages", "75 pages", "123 pages", "200 pages"],
+                "correct": "123 pages",
+                "explanation": "The EU AI Act contains 123 pages of processes, documents, and controls that organizations must comply with."
+            }
+        ],
+
+        # Chapter 2 - Data & Privacy
+        (2, "Data & Privacy - RACI and Governance"): [
+            {
+                "question": "What does RACI stand for?",
+                "options": ["Responsible, Accountable, Consulted, Informed", "Reviewed, Approved, Consulted, Implemented", "Required, Assigned, Completed, Inspected", "Responsible, Assigned, Checked, Integrated"],
+                "correct": "Responsible, Accountable, Consulted, Informed",
+                "explanation": "RACI stands for Responsible (does the work), Accountable (ultimately answerable), Consulted (provides input), and Informed (kept updated)."
+            },
+            {
+                "question": "According to the content, what is 'privacy by design'?",
+                "options": ["Adding privacy features after development", "Building privacy protections from the ground up", "Encrypting all data at rest", "Having a DPO review the system"],
+                "correct": "Building privacy protections from the ground up",
+                "explanation": "Privacy by design means building privacy protections into your AI system from the ground up, rather than adding them as an afterthought."
+            },
+            {
+                "question": "Which role must sign off on all data governance decisions in high-risk AI systems?",
+                "options": ["CEO", "CTO", "Data Protection Officer (DPO)", "Legal Counsel"],
+                "correct": "Data Protection Officer (DPO)",
+                "explanation": "The Data Protection Officer (DPO) must review and sign off on all data governance decisions, ensuring privacy and legal compliance."
+            }
+        ],
+
+        (2, "Data & Privacy - Sensitive Data and Legal Basis"): [
+            {
+                "question": "Which of the following is NOT considered a special category of sensitive personal data under GDPR?",
+                "options": ["Racial or ethnic origin", "Political opinions", "Email address", "Health data"],
+                "correct": "Email address",
+                "explanation": "Email address is regular personal data. Special categories include racial/ethnic origin, political opinions, religious beliefs, trade union membership, genetic data, biometric data, health data, and data about sex life or sexual orientation."
+            },
+            {
+                "question": "What is the most demanding legal basis for processing personal data?",
+                "options": ["Contract", "Legitimate Interest", "Consent", "Legal Obligation"],
+                "correct": "Consent",
+                "explanation": "Consent is the most demanding legal basis because it must be freely given, specific, informed, and unambiguous. Pre-ticked boxes don't count, and users must be able to easily withdraw consent."
+            },
+            {
+                "question": "What must you conduct before relying on legitimate interest as your legal basis?",
+                "options": ["Privacy Impact Assessment", "Legitimate Interest Assessment", "Data Protection Impact Assessment", "Risk Assessment"],
+                "correct": "Legitimate Interest Assessment",
+                "explanation": "Before relying on legitimate interest, you must conduct a Legitimate Interest Assessment (LIA) that balances your interests against the data subject's rights and freedoms."
+            }
+        ],
+
+        (2, "Data & Privacy - Privacy Impact Assessments (PIA)"): [
+            {
+                "question": "How many parts does a Privacy Impact Assessment have?",
+                "options": ["3 parts", "5 parts", "7 parts", "10 parts"],
+                "correct": "5 parts",
+                "explanation": "A PIA has 5 parts: 1) Description of intended processing, 2) Assessment of risks, 3) Measures to address risks, 4) Safeguards and security measures, 5) Justification for processing."
+            },
+            {
+                "question": "Which scenario definitely requires a PIA?",
+                "options": ["Processing employee email addresses", "Small-scale customer surveys", "Large-scale profiling with significant effects", "Processing publicly available data"],
+                "correct": "Large-scale profiling with significant effects",
+                "explanation": "Large-scale profiling that has significant effects on individuals is specifically listed as high-risk processing that requires a PIA."
+            },
+            {
+                "question": "Who must review the PIA at project pitstop meetings?",
+                "options": ["Only the project lead", "The CEO", "The Data Protection Officer", "External auditors"],
+                "correct": "The Data Protection Officer",
+                "explanation": "The DPO must review the PIA at pitstop meetings to ensure privacy risks are properly assessed and mitigated."
+            }
+        ],
+
+        (2, "Data & Privacy - Anonymization and Privacy Enhancing Technologies (PETs)"): [
+            {
+                "question": "Which PET enables insights from encrypted data without decrypting it?",
+                "options": ["Synthetic Data", "Differential Privacy", "Homomorphic Encryption", "Federated Learning"],
+                "correct": "Homomorphic Encryption",
+                "explanation": "Homomorphic Encryption allows computations to be performed on encrypted data while preserving statistical properties, without needing to decrypt it."
+            },
+            {
+                "question": "What is the main benefit of Federated Learning?",
+                "options": ["Faster training", "Lower costs", "Data never leaves local devices", "Better accuracy"],
+                "correct": "Data never leaves local devices",
+                "explanation": "Federated Learning's key advantage is that data never leaves local devices - only model updates are shared, protecting privacy."
+            },
+            {
+                "question": "What does Differential Privacy do?",
+                "options": ["Encrypts sensitive fields", "Removes PII from datasets", "Adds carefully calibrated noise to protect individuals", "Creates synthetic copies of data"],
+                "correct": "Adds carefully calibrated noise to protect individuals",
+                "explanation": "Differential Privacy manipulates data by adding carefully calibrated noise so it no longer reflects identifiable individuals while preserving overall statistical properties."
+            }
+        ],
+
+        # Chapter 3 - Security
+        (3, "Security - Introduction to AI Security Threats"): [
+            {
+                "question": "Why is AI security different from traditional software security?",
+                "options": ["AI uses more servers", "AI systems learn from data, creating new attack surfaces", "AI is newer technology", "AI processes more data"],
+                "correct": "AI systems learn from data, creating new attack surfaces",
+                "explanation": "AI systems are fundamentally different because they learn behavior from data, making them susceptible to entirely new classes of attacks that target the learning process, training data, and decision-making patterns."
+            },
+            {
+                "question": "Which attack surface is unique to AI systems?",
+                "options": ["Network vulnerabilities", "Training data poisoning", "SQL injection", "DDoS attacks"],
+                "correct": "Training data poisoning",
+                "explanation": "Training data poisoning is unique to AI - attackers can manipulate the model's behavior by corrupting the data it learns from, a threat that doesn't exist in traditional software."
+            },
+            {
+                "question": "Who must both sign off on AI security measures?",
+                "options": ["CEO and CTO", "CISO and DPO", "Legal and Compliance", "Dev and Ops teams"],
+                "correct": "CISO and DPO",
+                "explanation": "Both the CISO (Chief Information Security Officer) and DPO (Data Protection Officer) must sign off, ensuring both traditional security and AI-specific concerns are addressed."
+            }
+        ],
+
+        (3, "Security - Training Data and Model Threats"): [
+            {
+                "question": "What is the main risk of training data leaks?",
+                "options": ["Slowing down training", "Revealing model architecture", "Adversaries gain blueprints for attacking the model", "Increased storage costs"],
+                "correct": "Adversaries gain blueprints for attacking the model",
+                "explanation": "When training data leaks, adversaries can study patterns, edge cases, and biases to reverse-engineer the model's decision boundaries and find weaknesses."
+            },
+            {
+                "question": "What percentage of training data needs to be poisoned to significantly alter model behavior?",
+                "options": ["1%", "3%", "10%", "25%"],
+                "correct": "3%",
+                "explanation": "Research shows that poisoning just 3% of training data can significantly alter model behavior, making this attack particularly dangerous at scale."
+            },
+            {
+                "question": "What is a 'BadNets' attack?",
+                "options": ["Stealing model parameters", "Poisoning pre-trained models with backdoors", "DDoS on training infrastructure", "Extracting training data"],
+                "correct": "Poisoning pre-trained models with backdoors",
+                "explanation": "BadNets is a supply chain attack where pre-trained models are poisoned with backdoors that persist even after fine-tuning for specific applications."
+            }
+        ],
+
+        (3, "Security - Adversarial Attacks and Inference Threats"): [
+            {
+                "question": "What makes adversarial examples particularly dangerous?",
+                "options": ["They require insider access", "They look normal to humans but fool AI", "They crash the system", "They're expensive to create"],
+                "correct": "They look normal to humans but fool AI",
+                "explanation": "Adversarial examples are inputs that look normal or imperceptibly different to humans but cause AI systems to make completely wrong predictions."
+            },
+            {
+                "question": "What is 'transferability' in the context of adversarial attacks?",
+                "options": ["Attacks can be automated", "Attacks work across different models", "Attacks transfer between networks", "Models transfer attack resistance"],
+                "correct": "Attacks work across different models",
+                "explanation": "Transferability means adversarial examples crafted for one model often fool other similar models, even with different architectures, making attacks easier to scale."
+            },
+            {
+                "question": "What is model inversion?",
+                "options": ["Running the model backwards", "Using model outputs to reconstruct training data", "Inverting prediction confidence", "Reversing model updates"],
+                "correct": "Using model outputs to reconstruct training data",
+                "explanation": "Model inversion attacks use careful querying of a model's outputs to infer and potentially reconstruct information about the data it was trained on."
+            }
+        ],
+
+        # Chapter 4 - Risk & Fairness
+        (4, "Risk & Fairness - Establishing Context and Identifying Issues"): [
+            {
+                "question": "What are the two interwoven threads in AI systems?",
+                "options": ["Performance and Accuracy", "Risk and Fairness", "Speed and Reliability", "Cost and Quality"],
+                "correct": "Risk and Fairness",
+                "explanation": "Risk ('What could go wrong?') and Fairness ('Could this treat people unfairly?') are two distinct but deeply connected concerns that must be addressed in parallel."
+            },
+            {
+                "question": "Which is an example of Civil and Political Rights impact?",
+                "options": ["Access to fair wages", "Healthcare availability", "Free expression and privacy", "Educational opportunities"],
+                "correct": "Free expression and privacy",
+                "explanation": "Civil and Political Rights include liberty, free expression, privacy, and freedom from discrimination - fundamental individual rights."
+            },
+            {
+                "question": "Why is environmental impact considered a fairness issue?",
+                "options": ["It increases costs", "It reduces performance", "Future generations bear the cost", "It slows down training"],
+                "correct": "Future generations bear the cost",
+                "explanation": "Environmental impact from AI's energy consumption is a fairness issue because future generations will bear the environmental costs of today's AI convenience."
+            }
+        ],
+
+        (4, "Risk & Fairness - Biased Feedback Loops and Mitigation"): [
+            {
+                "question": "How many steps are in the bias escalation process?",
+                "options": ["3 steps", "4 steps", "5 steps", "7 steps"],
+                "correct": "5 steps",
+                "explanation": "The bias escalation process has 5 steps: Biased Input Data → AI Decision Making → Feedback Loop → Reinforcement → Escalation."
+            },
+            {
+                "question": "What is 'automation bias'?",
+                "options": ["AI making biased decisions", "Tendency to over-trust AI recommendations", "Biased training data", "Discriminatory algorithms"],
+                "correct": "Tendency to over-trust AI recommendations",
+                "explanation": "Automation bias is the human tendency to over-trust AI recommendations, even when told the AI might be wrong, leading people to defer to AI inappropriately."
+            },
+            {
+                "question": "For high-stakes decisions, what type of human oversight is required?",
+                "options": ["Out-of-the-loop", "In-the-loop", "Automated", "Delayed review"],
+                "correct": "In-the-loop",
+                "explanation": "High-stakes decisions (hiring, lending, medical diagnoses) require human-in-the-loop (HITL) oversight where the AI recommends but humans ultimately decide."
+            }
+        ],
+
+        (4, "Risk & Fairness - Types of Bias"): [
+            {
+                "question": "What is survivorship bias?",
+                "options": ["Bias toward recent data", "Only seeing survivors, missing what didn't survive", "Bias from measurement errors", "Cultural bias in datasets"],
+                "correct": "Only seeing survivors, missing what didn't survive",
+                "explanation": "Survivorship bias occurs when you only analyze things that 'survived' some process, missing crucial information about what didn't survive to be measured."
+            },
+            {
+                "question": "Which bias occurs when measurement processes systematically skew results?",
+                "options": ["Sampling bias", "Measurement bias", "Recency bias", "Confirmation bias"],
+                "correct": "Measurement bias",
+                "explanation": "Measurement bias occurs when measurement methods or instruments systematically skew data, like blood pressure cuffs that give inaccurate readings for certain body sizes."
+            },
+            {
+                "question": "What is confirmation bias in the context of AI development?",
+                "options": ["Model confirms predictions", "Interpreting data to support pre-existing beliefs", "Confirming test results", "Bias in confirmation emails"],
+                "correct": "Interpreting data to support pre-existing beliefs",
+                "explanation": "Confirmation bias is when humans interpret data and select features in ways that support their pre-existing beliefs, affecting what goes into the model."
+            }
+        ],
+
+        (4, "Risk & Fairness - Fairness Metrics and Thresholds"): [
+            {
+                "question": "What does the '80% rule' state?",
+                "options": ["Models must be 80% accurate", "80% of users must be satisfied", "Selection rate for any group should be at least 80% of the highest rate", "Training data must be 80% complete"],
+                "correct": "Selection rate for any group should be at least 80% of the highest rate",
+                "explanation": "The 80% rule states that the selection rate for any group should be at least 80% of the rate for the highest-selected group, indicating potential discrimination if lower."
+            },
+            {
+                "question": "What is the difference between Equal Opportunity and Equalized Odds?",
+                "options": ["They're the same", "EO balances TPR only; EOdds balances TPR and FPR", "EO is stricter", "EOdds only applies to binary classification"],
+                "correct": "EO balances TPR only; EOdds balances TPR and FPR",
+                "explanation": "Equal Opportunity balances True Positive Rates across groups, while Equalized Odds balances both True Positive Rates AND False Positive Rates, making it more stringent."
+            },
+            {
+                "question": "Can you simultaneously satisfy all fairness definitions?",
+                "options": ["Yes, with enough data", "Yes, with the right algorithm", "No, they can be mathematically incompatible", "Only for simple models"],
+                "correct": "No, they can be mathematically incompatible",
+                "explanation": "In many real-world scenarios, different fairness definitions are mathematically incompatible - optimizing for one may worsen another, requiring careful choices."
+            }
+        ],
+
+        # Chapter 5 - Explainability
+        (5, "Explainability - Foundations and Techniques"): [
+            {
+                "question": "What does SHAP stand for?",
+                "options": ["Systematic Hybrid Analysis Protocol", "SHapley Additive exPlanations", "Structured Hierarchical AI Processing", "Secure Hashing Algorithm Protocol"],
+                "correct": "SHapley Additive exPlanations",
+                "explanation": "SHAP stands for SHapley Additive exPlanations, using game theory to assign each feature a contribution to the prediction."
+            },
+            {
+                "question": "What is the main advantage of LIME?",
+                "options": ["It's faster than other methods", "It works for any model type", "It provides global explanations", "It requires no computation"],
+                "correct": "It works for any model type",
+                "explanation": "LIME (Local Interpretable Model-agnostic Explanations) is model-agnostic, meaning it can explain predictions from any type of model."
+            },
+            {
+                "question": "Which technique is best for explaining computer vision models?",
+                "options": ["SHAP values", "Decision trees", "Saliency maps", "Linear regression coefficients"],
+                "correct": "Saliency maps",
+                "explanation": "Saliency maps are visualization techniques that highlight which pixels in an image most influenced the model's prediction, ideal for computer vision."
+            }
+        ],
+
+        (5, "Explainability - Communicating with End Users"): [
+            {
+                "question": "What are the two essential elements of AI explanation?",
+                "options": ["Technical details and code", "How it operates generally and why it made a specific decision", "Accuracy metrics and training data", "Model architecture and parameters"],
+                "correct": "How it operates generally and why it made a specific decision",
+                "explanation": "Users need two things: 1) General understanding of how the AI operates, and 2) Specific explanation of why it made a particular decision about them."
+            },
+            {
+                "question": "When must users be informed about AI-generated content?",
+                "options": ["Never, it's obvious", "Only for images", "When it could be mistaken for human-created content", "Only if asked"],
+                "correct": "When it could be mistaken for human-created content",
+                "explanation": "Users must be informed when content is AI-generated, especially if it could be mistaken for human-created content or real imagery (deepfakes)."
+            },
+            {
+                "question": "What must you do BEFORE deploying your AI system?",
+                "options": ["Train all users", "Get regulatory approval", "Validate explanations with actual users", "Publish documentation"],
+                "correct": "Validate explanations with actual users",
+                "explanation": "You must validate your communication channels with actual users BEFORE deployment to ensure they truly understand how the AI works and its limitations."
+            }
+        ],
+
+        # Chapter 6 - Technology Development Record
+        (6, "Technology Development Record - Planning and Design Phase"): [
+            {
+                "question": "What is the main purpose of the Technology Development Record (TDR)?",
+                "options": ["To store training data", "To document all decisions and changes from design through operations", "To backup model weights", "To track bugs"],
+                "correct": "To document all decisions and changes from design through operations",
+                "explanation": "The TDR is a comprehensive record documenting every significant decision, test, and change from initial design through operational life."
+            },
+            {
+                "question": "Why must success criteria be defined BEFORE building the model?",
+                "options": ["It's required by law", "To prevent reverse-engineering easier goals after seeing model capabilities", "To speed up training", "To reduce costs"],
+                "correct": "To prevent reverse-engineering easier goals after seeing model capabilities",
+                "explanation": "Defining success criteria before building prevents the temptation to set thresholds that match whatever your model achieved rather than what's actually needed."
+            },
+            {
+                "question": "What can failure to maintain a proper TDR for high-risk AI systems in the EU result in?",
+                "options": ["Warning letter", "Fines up to €35 million or 7% of global turnover", "System shutdown", "Mandatory retraining"],
+                "correct": "Fines up to €35 million or 7% of global turnover",
+                "explanation": "Under the EU AI Act, high-risk AI systems without proper TDRs can face fines up to €35 million or 7% of global annual turnover, whichever is higher."
+            }
+        ],
+
+        (6, "Technology Development Record - Data Preparation and Build Phases"): [
+            {
+                "question": "What should you do about data coverage gaps?",
+                "options": ["Ignore them", "Document them explicitly", "Fill them with synthetic data", "Train anyway"],
+                "correct": "Document them explicitly",
+                "explanation": "You should explicitly document coverage gaps and known limitations so users can calibrate their trust appropriately. Don't pretend your data is perfect."
+            },
+            {
+                "question": "What is the key requirement for model building documentation?",
+                "options": ["Must fit on one page", "Must be technical enough that experts can reproduce it", "Must be approved by legal", "Must include all code"],
+                "correct": "Must be technical enough that experts can reproduce it",
+                "explanation": "Model building must be documented in sufficient detail that an independent expert could reproduce your exact model and results."
+            },
+            {
+                "question": "What should you include in data cards?",
+                "options": ["Only data size", "Provenance, composition, quality issues, known biases", "Just the file names", "Only the collection date"],
+                "correct": "Provenance, composition, quality issues, known biases",
+                "explanation": "Data cards should comprehensively document provenance, size and composition, collection methodology, known biases, labeling process, and quality issues."
+            }
+        ],
+
+        # Chapter 7 - Post Market Monitoring
+        (7, "Post Market Monitoring - Governance and Continuous Monitoring"): [
+            {
+                "question": "Why do AI systems change after deployment even if the model is frozen?",
+                "options": ["Hardware degradation", "User base evolution and data distribution shift", "Software bugs", "Network issues"],
+                "correct": "User base evolution and data distribution shift",
+                "explanation": "Even frozen models face changing conditions: user bases evolve, feedback loops emerge, the world changes, causing distribution shift and performance degradation."
+            },
+            {
+                "question": "How many tonnes of CO2 per year might a model on 10 A100 GPUs at 60% utilization emit?",
+                "options": ["1.2 tonnes", "2.5 tonnes", "4.1 tonnes", "8.3 tonnes"],
+                "correct": "4.1 tonnes",
+                "explanation": "According to the calculation in the content: 0.96kW × 24h × 30 days × 12 months × 0.5kg CO2/kWh ≈ 4.1 tonnes CO2/year."
+            },
+            {
+                "question": "What triggers an investigation if Disparate Impact falls below threshold?",
+                "options": ["Immediately", "After 24 hours", "After 7 days", "After 30 days"],
+                "correct": "After 24 hours",
+                "explanation": "According to the example, if Disparate Impact falls below 0.78 for 2 consecutive days (48 hours), it becomes critical and triggers VP escalation."
+            }
+        ],
+
+        (7, "Post Market Monitoring - Assessments and Technology Development Record Updates"): [
+            {
+                "question": "How often should high-risk AI systems undergo periodic assessments?",
+                "options": ["Monthly", "Quarterly", "Semi-annually", "Annually"],
+                "correct": "Quarterly",
+                "explanation": "High-risk AI systems require quarterly assessments at minimum, with a comprehensive annual review, to ensure ongoing compliance and performance."
+            },
+            {
+                "question": "What is the target comprehension rate for UI effectiveness testing?",
+                "options": ["≥60%", "≥70%", "≥80%", "≥90%"],
+                "correct": "≥80%",
+                "explanation": "UI assessments should target ≥80% of users correctly answering comprehension questions about how the AI works and its limitations."
+            },
+            {
+                "question": "What must happen when you make changes to your AI system?",
+                "options": ["Nothing special", "Update the TDR before deployment", "Get CEO approval", "Retrain the model"],
+                "correct": "Update the TDR before deployment",
+                "explanation": "All changes require updating the Technology Development Record BEFORE deployment, maintaining an accurate, current record throughout the system's lifecycle."
+            }
+        ],
+    }
+
+    # Return quiz for this section, or default questions if not found
+    key = (chapter_idx, section_title)
+    return quiz_bank.get(key, [
+        {
+            "question": "Did you understand the key concepts in this section?",
+            "options": ["Yes", "Somewhat", "No", "Need to review"],
+            "correct": "Yes",
+            "explanation": "Make sure to review the material if you're not confident with the concepts covered."
+        }
+    ])
+
+
 def show_neom_training_pathway_page():
     """Display NEOM Training AI pathway with 7 chapters"""
     # Return to home button
@@ -2335,7 +2737,7 @@ def show_neom_training_pathway_page():
 
     # Navigation buttons
     st.markdown("### Course Navigation")
-    col1, col2, col3 = st.columns([2, 2, 1])
+    col1, col2 = st.columns([3, 1])
 
     with col1:
         if st.button("📚 View Chapters", key="view_chapters", use_container_width=True):
@@ -2343,11 +2745,6 @@ def show_neom_training_pathway_page():
             st.rerun()
 
     with col2:
-        if st.button("📊 View Dashboard", key="view_dashboard_training"):
-            st.session_state.current_page = "dashboard"
-            st.rerun()
-
-    with col3:
         if st.button("💾 Save Progress", key="save_training"):
             st.session_state.storage_manager.save_project(project)
             st.success("✅ Progress saved!")
@@ -2410,6 +2807,70 @@ def show_neom_training_pathway_page():
                     st.markdown("**Learning Objectives:**")
                     for item in step.checklist_items:
                         st.markdown(f"- {item}")
+
+                # Add quiz for this section
+                st.markdown("---")
+                st.markdown("### 📝 Knowledge Check Quiz")
+
+                # Initialize quiz state
+                if f"quiz_{step.id}" not in st.session_state:
+                    st.session_state[f"quiz_{step.id}"] = {"answers": {}, "submitted": False, "score": None}
+
+                quiz_state = st.session_state[f"quiz_{step.id}"]
+
+                # Generate quiz questions based on section content
+                quiz_questions = _generate_quiz_questions(idx, step.title)
+
+                if not quiz_state["submitted"]:
+                    # Show quiz questions
+                    for q_idx, question in enumerate(quiz_questions):
+                        st.markdown(f"**Question {q_idx + 1}:** {question['question']}")
+                        answer = st.radio(
+                            "Select your answer:",
+                            question['options'],
+                            key=f"quiz_{step.id}_q{q_idx}",
+                            index=None
+                        )
+                        quiz_state["answers"][q_idx] = answer
+                        st.markdown("")
+
+                    # Submit button
+                    if st.button("Submit Quiz", key=f"submit_quiz_{step.id}"):
+                        # Calculate score
+                        correct = sum(1 for q_idx, q in enumerate(quiz_questions)
+                                    if quiz_state["answers"].get(q_idx) == q['correct'])
+                        quiz_state["score"] = (correct / len(quiz_questions)) * 100
+                        quiz_state["submitted"] = True
+                        st.rerun()
+                else:
+                    # Show results
+                    score = quiz_state["score"]
+                    if score >= 80:
+                        st.success(f"🎉 Excellent! You scored {score:.0f}%")
+                    elif score >= 60:
+                        st.info(f"👍 Good job! You scored {score:.0f}%")
+                    else:
+                        st.warning(f"📖 You scored {score:.0f}%. Consider reviewing the material.")
+
+                    # Show correct answers
+                    with st.expander("View Correct Answers"):
+                        for q_idx, question in enumerate(quiz_questions):
+                            user_answer = quiz_state["answers"].get(q_idx, "Not answered")
+                            is_correct = user_answer == question['correct']
+                            st.markdown(f"**Q{q_idx + 1}:** {question['question']}")
+                            st.markdown(f"Your answer: {user_answer} {'✅' if is_correct else '❌'}")
+                            st.markdown(f"Correct answer: {question['correct']}")
+                            st.markdown(f"*Explanation:* {question['explanation']}")
+                            st.markdown("")
+
+                    # Retake button
+                    if st.button("Retake Quiz", key=f"retake_quiz_{step.id}"):
+                        quiz_state["answers"] = {}
+                        quiz_state["submitted"] = False
+                        quiz_state["score"] = None
+                        st.rerun()
+
+                st.markdown("---")
 
                 # Status update for each step
                 col1, col2, col3 = st.columns([2, 2, 2])

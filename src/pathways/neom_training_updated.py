@@ -149,7 +149,18 @@ class NEOMTrainingPathway:
             self._create_step(
                 project_id, 1, 1,
                 "Introduction & Overview - Why Trustworthy AI Matters",
-                """**The Challenge of "Working" AI**
+                """**Learning Objectives:**
+- Understand what it means for an AI system to truly 'work'
+- Learn why 72% of consumers care about AI policies
+- Understand the 1.6x growth advantage of ethical AI companies
+- Review the EU AI Act's 123 pages of requirements
+- Review SDAIA's 46 pages of AI Ethics Principles
+- Understand NEOM's three-document framework
+- Complete Chapter 1 quiz
+
+---
+
+**The Challenge of "Working" AI**
 
 Imagine that you've just developed a new AI model powering some fantastic service. Your AI model is churning out predictions, and everything is working brilliantly. But what do we mean by "working"?
 
@@ -166,16 +177,7 @@ For an AI system to be described as "working", it needs to do more than produce 
 - The EU AI Act: 123 pages of processes, documents, and controls
 - Saudi Arabia's SDAIA: 46 pages of AI Ethics Principles
 - Failure to comply can result in significant penalties""",
-                [
-                    "Understand what it means for an AI system to truly 'work'",
-                    "Learn why 72% of consumers care about AI policies",
-                    "Understand the 1.6x growth advantage of ethical AI companies",
-                    "Review the EU AI Act's 123 pages of requirements",
-                    "Review SDAIA's 46 pages of AI Ethics Principles",
-                    "Understand NEOM's three-document framework (Playbook, Compliance Tool, Toolbox)",
-                    "Learn about the pitstop meeting process",
-                    "Complete Chapter 1 quiz"
-                ]
+                []  # Learning objectives moved to content
             ),
         ]
 
@@ -290,7 +292,17 @@ Many teams make the mistake of picking their legal basis as an afterthought, the
             self._create_step(
                 project_id, 2, 4,
                 "Data & Privacy - Privacy Impact Assessments (PIA)",
-                """**When Privacy Impact Assessments Are Required**
+                """**Learning Objectives:**
+- Understand what constitutes 'high-risk' data processing
+- Learn the types of processing activities that trigger PIA requirements
+- Understand how to assess risk using severity and likelihood
+- Learn the five parts of a Privacy Impact Assessment
+- Understand when to conduct a PIA even if not required
+- Learn about pitstop review requirements with DPO
+
+---
+
+**When Privacy Impact Assessments Are Required**
 
 You must determine whether your proposed data processing represents "high-risk" processing. This risk is high when, considering the nature, scope, context and purposes of the processing, it is likely to result in a high risk to the rights and freedoms of natural persons.
 
@@ -312,19 +324,22 @@ You must determine whether your proposed data processing represents "high-risk" 
 3. Measures to address those risks
 4. Safeguards, security measures and mechanisms
 5. Justification for processing given the risks""",
-                [
-                    "Understand what constitutes 'high-risk' data processing",
-                    "Learn the types of processing activities that trigger PIA requirements",
-                    "Understand how to assess risk using severity and likelihood",
-                    "Learn the five parts of a Privacy Impact Assessment",
-                    "Understand when to conduct a PIA even if not required",
-                    "Learn about pitstop review requirements with DPO"
-                ]
+                []  # Learning objectives moved to content
             ),
             self._create_step(
                 project_id, 2, 5,
                 "Data & Privacy - Anonymization and Privacy Enhancing Technologies (PETs)",
-                """**Data Anonymization and PETs**
+                """**Learning Objectives:**
+- Understand data anonymization techniques and re-identification risks
+- Learn about Privacy-Enhancing Technologies (PETs)
+- Understand PETs that disguise data (Synthetic Data, Differential Privacy, Homomorphic Encryption)
+- Learn about PETs that enable insights without sharing data (Federated Learning, Secure Multi-Party Computation, Trusted Execution Environments)
+- Understand when to use each type of PET
+- Learn about implementing PETs in AI systems
+
+---
+
+**Data Anonymization and PETs**
 
 **Anonymization:**
 The simplest form is to remove Personally Identifiable Information (PII) from the dataset. However, the risk of re-identification remains where the remaining data could be matched to another dataset containing PII.
@@ -342,17 +357,7 @@ The simplest form is to remove Personally Identifiable Information (PII) from th
 - **Federated Learning** - Build AI model on distributed data without centralizing it
 
 The expectation is that service developers will implement PETs where practicable.""",
-                [
-                    "Understand the difference between PII removal and full anonymization",
-                    "Learn about re-identification risks",
-                    "Understand Synthetic Data and its use cases",
-                    "Learn about Differential Privacy techniques",
-                    "Understand Homomorphic Encryption",
-                    "Learn about Secure Multi-Party Computation",
-                    "Understand Federated Learning",
-                    "Learn how to justify PET selection decisions",
-                    "Complete Chapter 2 quiz"
-                ]
+                []  # Learning objectives moved to content
             ),
         ]
 
