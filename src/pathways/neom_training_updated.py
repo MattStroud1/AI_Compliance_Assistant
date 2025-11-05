@@ -186,64 +186,106 @@ For an AI system to be described as "working", it needs to do more than produce 
             self._create_step(
                 project_id, 2, 2,
                 "Data & Privacy - RACI and Governance",
-                """**Implementing Privacy by Design and Good Data Governance**
+                """**Learning Objectives:**
+- Understand what 'privacy by design' means and why it matters
+- Learn the three critical data governance roles and their responsibilities
+- Master how to establish and maintain a RACI matrix
+- Understand why specificity in RACI assignments prevents costly gaps
+- Learn Data Governance Framework requirements
+- Understand version control for RACI matrices
 
-This section focuses on ensuring and evidencing good data governance and the implementation of "privacy by design". This starts with establishing clear governance structures, determining legal basis for processing, and implementing features to support privacy.
+---
 
-**RACI Matrix:**
-At the start of the project, establish a RACI (Responsible, Accountable, Consulted, Informed) matrix and get buy-in from those named on it. Make the RACI specific, including what decisions and sign-offs each person is responsible for. Do not leave gaps or ambiguity.
+**Why Data Governance is Your AI Project's Foundation**
 
-**Critical Data Governance Roles:**
-1. **Data Owner** - Authority over data assets, makes decisions about data access and usage
-2. **Data Steward** - Manages day-to-day data operations and implements data policies
-3. **Data Custodian** - Responsible for technical storage, security, and access controls
+Picture this: You've built a brilliant AI system that predicts customer preferences with uncanny accuracy. But six months after launch, you discover it's been using personal data without proper consent. The regulators come knocking, your reputation takes a hit, and suddenly you're facing fines that could sink the project. This nightmare scenario is entirely preventable with proper data governance from day one.
 
-Each role should operate within a clear and well-documented Data Governance Framework. The RACI must be kept up to date throughout the project.""",
-                [
-                    "Understand what 'privacy by design' means",
-                    "Learn the three critical data governance roles",
-                    "Understand how to establish a RACI matrix",
-                    "Learn why specificity in RACI assignments prevents gaps",
-                    "Understand the Data Governance Framework requirements",
-                    "Learn about version control for RACI matrices"
-                ]
+Data governance isn't just bureaucracy—it's the scaffolding that allows your AI system to stand tall and withstand scrutiny. At its heart is a principle called "privacy by design," which means building privacy protections into your AI system from the ground up, rather than bolting them on as an afterthought when problems emerge.
+
+**The RACI Matrix: Your Project's North Star**
+
+Think of a RACI matrix as your project's organizational chart on steroids. RACI stands for Responsible (who does the work), Accountable (who owns the outcome), Consulted (who provides input), and Informed (who needs to know). Without clear RACI definitions, you'll find team members stepping on each other's toes, critical decisions falling through cracks, and when something goes wrong, everyone pointing fingers.
+
+Here's what makes a good RACI matrix: specificity. Don't just write "Data Team" as responsible—name actual people with their email addresses. Don't say someone is "accountable for data quality"—specify they're accountable for ensuring training data accuracy meets the 95% threshold before model training begins. This level of detail transforms your RACI from a vague organizational chart into an operational playbook.
+
+Critically, your RACI must include three specialized data governance roles:
+
+**The Data Owner** is your data's executive sponsor. They have authority over data assets and make strategic decisions about access and usage. Think of them as the data's guardian—they're ultimately responsible if something goes wrong with how data is collected, used, or shared. In practice, this is often a senior business leader who understands both the value and risks of the data.
+
+**The Data Steward** is your hands-on data manager. They handle day-to-day operations, implementing policies and ensuring data is properly documented. If the Data Owner is the architect, the Data Steward is the general contractor making sure everything is built to spec. They're the ones who catch quality issues early, maintain metadata, and ensure teams follow established procedures.
+
+**The Data Custodian** is your technical guardian. They're responsible for the physical storage, security, and access controls. They implement encryption, manage backups, set up access permissions, and ensure data residency requirements are met. If there's a data breach or loss, the Data Custodian is first in the hot seat.
+
+**Making It Operational**
+
+The best RACI matrices are living documents, not dusty PDFs filed away and forgotten. Version control is essential—when roles change or new tasks emerge, create a new version, archive the old one, and get signatures on the update. This creates an audit trail showing you had proper governance at each stage.
+
+Start your project with a RACI kick-off meeting. Walk through each row of the matrix with the entire team. Make sure everyone understands not just their own role, but how they interact with others. Where are the handoff points? What are the escalation paths? Who has authority to override whom? These conversations surface misunderstandings before they become conflicts.
+
+Your Data Governance Framework should document all of this: roles, responsibilities, decision rights, escalation procedures, and data handling standards. It's tempting to over-engineer this, creating hundreds of pages nobody reads. Resist that urge. A concise, clear framework that people actually reference beats a comprehensive tome that gathers dust.
+
+**The Hidden Benefits**
+
+When data governance is done right, you'll notice something remarkable: projects move faster, not slower. Decisions get made quickly because everyone knows who has authority. Mistakes get caught early because responsibilities are clear. Compliance becomes straightforward because you can show auditors exactly who did what and when.
+
+Moreover, good governance builds trust. When data subjects know there's a named, accountable person responsible for protecting their information, they're more comfortable sharing it. When business leaders know there are proper controls, they're more willing to greenlight innovative uses of data.
+
+The RACI matrix and governance framework you establish now will serve as the blueprint for every AI project that follows. Invest the time to get it right, and you'll reap the benefits for years to come.""",
+                []  # Learning objectives moved to content
             ),
             self._create_step(
                 project_id, 2, 3,
                 "Data & Privacy - Sensitive Data and Legal Basis",
-                """**Understanding Sensitive Data**
+                """**Learning Objectives:**
+- Identify what constitutes sensitive data under PDPL and GDPR
+- Understand children's data age thresholds (13 for PDPL, 16 for GDPR)
+- Learn the three common legal bases for processing personal data
+- Master the Legitimate Interest Assessment (LIA) three-question test
+- Understand why sensitive data requires special legal basis considerations
+- Learn how to design features to support your chosen legal basis
 
-An early step in the design process is to determine whether your data includes sensitive data or data of children.
+---
 
-**Sensitive data relates to (PDPL & GDPR):**
-- Ethnic or tribal origin
-- Religious, intellectual, or political beliefs
-- Civil association membership
-- Security and criminal data
-- Biometric data for identification
-- Genetic data and health data
-- Location data and financial data
-- Trade union membership (GDPR)
-- Sexual orientation or sex life (GDPR)
+**The Sensitive Data Minefield: Why Some Data Demands Extra Care**
 
-**Children's Data:** Under 13 years (PDPL) or 16 years (GDPR)
+Not all data is created equal. While your name and email address are personal data requiring protection, they don't carry the same risks as your medical records or political affiliations. This is why regulations draw a sharp line between regular personal data and what they call "sensitive" or "special category" data.
 
-**Legal Basis for Processing:**
-The three most common legal bases are:
-1. **Legitimate Interest** - Requires a Legitimate Interest Assessment (LIA)
-2. **Contract** - Appropriate clauses in contracts
-3. **Consent** - Requires mechanisms to capture consent
+Sensitive data is information that, if mishandled, could lead to discrimination, persecution, or significant harm to individuals. Think about it: if an AI system learns you enjoy Italian food, the worst that happens is targeted pasta ads. But if it reveals your HIV status, religious beliefs, or sexual orientation to the wrong parties? That could destroy lives.
 
-**Note:** You cannot process sensitive data on the legal basis of legitimate interest.""",
-                [
-                    "Identify what constitutes sensitive data under PDPL",
-                    "Identify additional sensitive data categories under GDPR",
-                    "Understand children's data age thresholds (13 for PDPL, 16 for GDPR)",
-                    "Learn the three common legal bases for processing",
-                    "Understand the Legitimate Interest Assessment (LIA) three-question test",
-                    "Learn why sensitive data cannot use Legitimate Interest as legal basis",
-                    "Understand how to design features to support chosen legal basis"
-                ]
+Both the Saudi Personal Data Protection Law (PDPL) and the European GDPR treat sensitive data with heightened scrutiny. The PDPL list includes ethnic or tribal origin, religious and political beliefs, civil association memberships, security and criminal data, biometric identifiers, genetic and health information, location and financial data, and information about parentage. The GDPR adds trade union membership and data about sexual orientation or sex life.
+
+**The Children's Data Special Case**
+
+Children's data gets similar special treatment, but the age threshold varies. Under PDPL, children are those under 13 years old. GDPR sets the bar higher at 16 (though member states can lower it to 13). Why the difference? It reflects different cultural views on when young people can meaningfully consent to data processing.
+
+Here's the practical implication: if your AI system might interact with children, you need robust age verification and parental consent mechanisms. You can't just ask "Are you over 13?" and take their word for it. You need actual verification—which is why many social platforms simply ban users under 13 rather than deal with the compliance headache.
+
+**Choosing Your Legal Basis: The Foundation of Lawful Processing**
+
+Before you collect a single byte of personal data, you must answer a fundamental question: "On what legal grounds are we processing this data?" In privacy law, this is called your "legal basis," and choosing wrong can invalidate your entire data processing operation.
+
+For private sector AI projects, three legal bases dominate: Legitimate Interest, Contract, and Consent. Each comes with different requirements and constraints.
+
+**Legitimate Interest** is popular because it's flexible—you can process data for purposes that benefit your business, as long as those benefits aren't outweighed by privacy risks to individuals. But there's a catch: you must conduct a Legitimate Interest Assessment (LIA) answering three questions:
+
+1. Is there a legitimate interest behind the processing? (Your business need must be real and specific)
+2. Is the processing necessary for that purpose? (Could you achieve your goal another way?)
+3. Do individuals' rights override your interest? (Would they reasonably expect this use? Could it harm them?)
+
+Only if you answer yes to the first two and no to the third can you proceed. And here's the critical constraint: **you absolutely cannot use Legitimate Interest as the legal basis for processing sensitive data**. The law considers sensitive data too risky for this flexible approach.
+
+**Contract** as a legal basis means the data processing is necessary to fulfill a contractual obligation with the data subject. For instance, if someone buys your AI-powered service, you can process their payment information because it's necessary to deliver what they purchased. The key word is "necessary"—you can't claim contract as your basis for optional marketing activities.
+
+**Consent** seems straightforward but is actually the most demanding legal basis. It must be freely given, specific, informed, and unambiguous. You can't bury consent in pages of terms and conditions. You can't make consent a condition for service when it's not necessary for that service. Pre-ticked boxes don't count. The user must take clear affirmative action.
+
+**Designing for Your Legal Basis**
+
+Your choice of legal basis isn't just a legal checkbox—it shapes your entire AI system design. If you're relying on consent, you need interfaces that clearly explain what data you're collecting and why, with prominent opt-in mechanisms. You need systems to track who consented to what and when. You need easy ways for users to withdraw consent, and automated processes to delete their data when they do.
+
+If you're using a contract basis, your agreements need specific clauses explaining the data processing. If you're claiming legitimate interest, you need documentation of your LIA, updated whenever your processing changes.
+
+Many teams make the mistake of picking their legal basis as an afterthought, then trying to retrofit their system to match. Do it the other way around: choose your legal basis early, document your reasoning, and build your data flows to support it from day one. This approach not only ensures compliance but also builds user trust, as your data practices will feel coherent and transparent rather than cobbled together.""",
+                []  # Learning objectives moved to content
             ),
             self._create_step(
                 project_id, 2, 4,
