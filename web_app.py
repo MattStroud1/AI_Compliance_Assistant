@@ -3036,7 +3036,9 @@ def show_neom_training_pathway_page():
                 quiz_state = st.session_state[f"quiz_{step.id}"]
 
                 # Generate quiz questions based on section content
-                quiz_questions = _generate_quiz_questions(idx, step.title)
+                # Strip "Chapter X: " prefix from title for quiz lookup
+                title_without_prefix = step.title.replace(f"Chapter {idx}: ", "")
+                quiz_questions = _generate_quiz_questions(idx, title_without_prefix)
 
                 # Show quiz questions with immediate feedback
                 for q_idx, question in enumerate(quiz_questions):
