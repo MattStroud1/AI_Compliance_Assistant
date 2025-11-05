@@ -2343,11 +2343,19 @@ def show_neom_operating_pathway_page():
 
 def show_neom_training_init_page():
     """Display NEOM Training on AI course initialization page"""
-    # If a training project is already loaded, go directly to course
+    # Check if a training project is already loaded
     if 'neom_project' in st.session_state and st.session_state.neom_project:
-        st.session_state.current_page = "neom_training_pathway"
-        st.rerun()
-        return
+        project = st.session_state.neom_project
+        # Verify this is actually a training project by checking phase structure
+        if project.phases and len(project.phases) == 7:
+            # Check if phases look like training chapters (they should have names like "Chapter 1")
+            if "Chapter" in project.phases[0].name:
+                st.session_state.current_page = "neom_training_pathway"
+                st.rerun()
+                return
+
+        # Wrong project type - clear it
+        st.session_state.neom_project = None
 
     # Return to home button
     if st.button("🏠 Return to Home Page", key="home_neom_training_init"):
@@ -3295,11 +3303,19 @@ def show_neom_training_pathway_page():
 
 def show_ropa_init_page():
     """Display ROPA project initialization page"""
-    # If a project is already loaded, go directly to pathway
+    # Check if a ROPA project is already loaded
     if 'neom_project' in st.session_state and st.session_state.neom_project:
-        st.session_state.current_page = "ropa_pathway"
-        st.rerun()
-        return
+        project = st.session_state.neom_project
+        # Verify this is actually a ROPA project by checking phase structure
+        if project.phases and len(project.phases) == 4:
+            # Check if phases look like ROPA phases (they should start with "Phase 1: Planning & Scoping")
+            if "Phase 1: Planning & Scoping" in project.phases[0].name or "ROPA" in project.project_name.upper():
+                st.session_state.current_page = "ropa_pathway"
+                st.rerun()
+                return
+
+        # Wrong project type - clear it
+        st.session_state.neom_project = None
 
     # Return to home button
     if st.button("🏠 Return to Home Page", key="home_ropa_init"):
@@ -3829,13 +3845,19 @@ def show_ropa_record_view():
 
 def show_dpia_init_page():
     """Display DPIA project initialization page"""
-    # If a project is already loaded, go directly to pathway
+    # Check if a DPIA project is already loaded
     if 'neom_project' in st.session_state and st.session_state.neom_project:
-        # Check if this is actually a DPIA project
-        if st.session_state.neom_project.phases and "DPIA" in st.session_state.neom_project.project_name:
-            st.session_state.current_page = "dpia_pathway"
-            st.rerun()
-            return
+        project = st.session_state.neom_project
+        # Verify this is actually a DPIA project by checking phase structure
+        if project.phases and len(project.phases) == 4:
+            # Check if phases look like DPIA phases (they should start with "Phase 1: Screening & Scoping")
+            if "Phase 1: Screening & Scoping" in project.phases[0].name or "DPIA" in project.project_name.upper():
+                st.session_state.current_page = "dpia_pathway"
+                st.rerun()
+                return
+
+        # Wrong project type - clear it
+        st.session_state.neom_project = None
 
     # Return to home button
     if st.button("🏠 Return to Home Page", key="home_dpia_init"):
