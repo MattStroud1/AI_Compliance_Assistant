@@ -3517,8 +3517,25 @@ def show_ropa_pathway_page():
                 with col2:
                     if st.button("Mark as Completed", key=f"complete_{step.id}"):
                         step.status = StepStatus.COMPLETED
+                        step.completed_at = datetime.now()
+
+                        # Save the answers to the step for ROPA record
+                        # Try AI-generated answer first, then fall back to manual input
+                        if f"draft_answer_{step.id}" in st.session_state:
+                            step.current_state_answer = st.session_state.get(f"edit_answer_{step.id}",
+                                                                             st.session_state.get(f"draft_answer_{step.id}", ""))
+                        elif f"input_{step.id}" in st.session_state:
+                            step.current_state_answer = st.session_state.get(f"input_{step.id}", "")
+
+                        # Save gap analysis
+                        if f"draft_gap_analysis_{step.id}" in st.session_state:
+                            step.gap_analysis_answer = st.session_state.get(f"gap_analysis_{step.id}",
+                                                                            st.session_state.get(f"draft_gap_analysis_{step.id}", ""))
+                        elif f"gaps_{step.id}" in st.session_state:
+                            step.gap_analysis_answer = st.session_state.get(f"gaps_{step.id}", "")
+
                         st.session_state.storage_manager.save_project(project)
-                        st.success(f"✅ {step.title} completed!")
+                        st.success(f"✅ {step.title} completed and saved to ROPA record!")
                         st.rerun()
 
                 with col3:
@@ -3529,11 +3546,145 @@ def show_ropa_pathway_page():
 
                 st.markdown("---")
 
-    # Completion check
+    # Completion check and ROPA Record button
     if all(all(step.status == StepStatus.COMPLETED for step in phase.steps) for phase in project.phases):
         st.balloons()
         st.success("🎉 Congratulations! You've completed all 9 steps of the ROPA creation process!")
         st.info("Your Record of Processing Activities is now complete and ready for ICO inspection.")
+
+        st.markdown("---")
+        if st.button("📄 View Complete ROPA Record", type="primary", use_container_width=True):
+            st.session_state.current_page = "ropa_record_view"
+            st.rerun()
+    elif any(step.status == StepStatus.COMPLETED for phase in project.phases for step in phase.steps):
+        # Show button if at least one step is completed
+        st.markdown("---")
+        st.markdown("### 📄 ROPA Record")
+        completed_count = sum(1 for phase in project.phases for step in phase.steps if step.status == StepStatus.COMPLETED)
+        st.info(f"You have completed {completed_count} of 9 steps. View your progress in the ROPA record.")
+        if st.button("📄 View ROPA Record (In Progress)", use_container_width=True):
+            st.session_state.current_page = "ropa_record_view"
+            st.rerun()
+
+
+def show_ropa_record_view():
+    """Display the compiled ROPA record from all completed steps"""
+    st.markdown("# 📄 Record of Processing Activities (ROPA)")
+
+    # Return to pathway button at the top
+    col1, col2, col3 = st.columns([1, 2, 1])
+    with col1:
+        if st.button("← Return to Pathway", use_container_width=True):
+            st.session_state.current_page = "ropa_pathway"
+            st.rerun()
+
+    # Get current project
+    project = st.session_state.get('neom_project')
+    if not project:
+        st.error("No ROPA project found. Please start a new ROPA project.")
+        return
+
+    st.markdown("---")
+
+    # Project metadata section
+    st.markdown("## Project Information")
+    metadata_col1, metadata_col2 = st.columns(2)
+
+    with metadata_col1:
+        st.markdown(f"**Organization:** {project.ai_system_name}")
+        st.markdown(f"**Project Name:** {project.project_name}")
+        if project.description:
+            st.markdown(f"**Project Scope:** {project.description}")
+
+    with metadata_col2:
+        st.markdown(f"**Created:** {project.created_at.strftime('%d %B %Y')}")
+        st.markdown(f"**Last Updated:** {project.updated_at.strftime('%d %B %Y')}")
+
+        # Count completed steps
+        total_steps = sum(len(phase.steps) for phase in project.phases)
+        completed_steps = sum(1 for phase in project.phases for step in phase.steps if step.status == StepStatus.COMPLETED)
+        st.markdown(f"**Completion Status:** {completed_steps} of {total_steps} steps ({int(completed_steps/total_steps*100)}%)")
+
+    # RACI information if available
+    if project.raci_matrix and project.raci_matrix.entries:
+        st.markdown("### Governance")
+        raci_col1, raci_col2 = st.columns(2)
+        with raci_col1:
+            if project.project_lead:
+                st.markdown(f"**ROPA Project Lead:** {project.project_lead}")
+        with raci_col2:
+            if project.pdpo_contact:
+                st.markdown(f"**Data Protection Officer:** {project.pdpo_contact}")
+
+    st.markdown("---")
+
+    # Display completed steps organized by phase
+    st.markdown("## ROPA Contents")
+
+    has_completed_steps = False
+
+    for phase in project.phases:
+        # Check if this phase has any completed steps
+        phase_completed_steps = [step for step in phase.steps if step.status == StepStatus.COMPLETED]
+
+        if phase_completed_steps:
+            has_completed_steps = True
+
+            # Phase header
+            st.markdown(f"### {phase.name}")
+            if phase.description:
+                st.markdown(f"*{phase.description}*")
+            st.markdown("")
+
+            # Display each completed step
+            for step in phase_completed_steps:
+                st.markdown(f"#### {step.title}")
+
+                # Current state answer
+                if step.current_state_answer:
+                    st.markdown("**Current State of Processing Activity:**")
+                    st.markdown(f"> {step.current_state_answer}")
+                    st.markdown("")
+
+                # Gap analysis
+                if step.gap_analysis_answer:
+                    st.markdown("**Gap Analysis & Improvement Areas:**")
+                    st.warning(step.gap_analysis_answer)
+                    st.markdown("")
+
+                # Completion info
+                if step.completed_at:
+                    st.caption(f"✅ Completed on {step.completed_at.strftime('%d %B %Y at %H:%M')}")
+
+                # User notes if any
+                if step.user_notes:
+                    with st.expander("📝 Additional Notes"):
+                        st.markdown(step.user_notes)
+
+                st.markdown("---")
+
+    if not has_completed_steps:
+        st.info("No completed steps yet. Complete steps in the pathway to build your ROPA record.")
+
+    # Export options section
+    st.markdown("## Export Options")
+    st.markdown("**Export formats** (coming soon):")
+
+    export_col1, export_col2, export_col3 = st.columns(3)
+    with export_col1:
+        st.button("📥 Download as PDF", disabled=True, use_container_width=True)
+    with export_col2:
+        st.button("📥 Download as Word", disabled=True, use_container_width=True)
+    with export_col3:
+        st.button("📥 Download as CSV", disabled=True, use_container_width=True)
+
+    st.caption("Export functionality will be available in a future update.")
+
+    # Footer with return button
+    st.markdown("---")
+    if st.button("← Return to Pathway", key="return_bottom", type="primary", use_container_width=True):
+        st.session_state.current_page = "ropa_pathway"
+        st.rerun()
 
 
 # Main app logic
@@ -3565,6 +3716,8 @@ def main():
         show_ropa_init_page()
     elif st.session_state.current_page == "ropa_pathway":
         show_ropa_pathway_page()
+    elif st.session_state.current_page == "ropa_record_view":
+        show_ropa_record_view()
     elif st.session_state.current_page == "project_dashboard":
         show_project_dashboard()
 

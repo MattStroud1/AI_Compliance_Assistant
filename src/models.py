@@ -70,6 +70,11 @@ class ComplianceStep(BaseModel):
     resources: List[Dict[str, str]] = Field(default_factory=list)
     user_notes: Optional[str] = None
     completed_at: Optional[datetime] = None
+    # ROPA-specific fields for saving answers
+    current_state_answer: Optional[str] = None  # What the organization currently has
+    gap_analysis_answer: Optional[str] = None  # Gaps identified between current and ideal state
+    project_id: Optional[str] = None  # Added for compatibility
+    phase: Optional[str] = None  # Added for compatibility
 
 
 class UserFeedback(BaseModel):
