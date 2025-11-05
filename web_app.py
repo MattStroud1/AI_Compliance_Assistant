@@ -48,6 +48,7 @@ from src.pathways.neom_procuring_updated import NEOMProcuringAIPathway
 from src.pathways.neom_operating_updated import NEOMOperatingAIPathway
 from src.pathways.neom_training_updated import NEOMTrainingPathway
 from src.pathways.ropa import ROPAPathway
+from src.pathways.dpia import DPIAPathway
 from src.storage.project_storage import ProjectStorageManager
 from src.notifications.email_service import EmailService
 from src.rag.document_rag import DocumentRAG
@@ -433,6 +434,12 @@ def show_welcome_page():
             "title": "ROPA Creation",
             "description": "Step-by-step guide for creating and maintaining UK GDPR Article 30 Records of Processing Activities",
             "page": "ropa_init",
+        },
+        "dpia": {
+            "icon": "🔒",
+            "title": "DPIA Creation",
+            "description": "8-step process for conducting Data Protection Impact Assessments under UK GDPR",
+            "page": "dpia_init",
         },
         "neom_training": {
             "icon": "🎓",
@@ -1660,6 +1667,10 @@ def _identify_pathway_type(project):
     first_phase_name = project.phases[0].name if project.phases else ""
     num_phases = len(project.phases)
 
+    # DPIA pathway - 4 phases starting with "Phase 1: Screening & Scoping"
+    if "Phase 1: Screening & Scoping" in first_phase_name or "DPIA" in project.project_name.upper():
+        return "dpia"
+
     # ROPA pathway - 4 phases starting with "Phase 1: Planning & Scoping"
     if "Phase 1: Planning & Scoping" in first_phase_name or "ROPA" in project.project_name.upper():
         return "ropa"
@@ -1790,7 +1801,8 @@ def show_project_dashboard():
         "building": [],
         "procuring": [],
         "operating": [],
-        "ropa": []
+        "ropa": [],
+        "dpia": []
     }
 
     for proj_info in project_list:
@@ -1866,6 +1878,22 @@ def show_project_dashboard():
             "📋 ROPA Projects",
             ropa_phases,
             "ropa_pathway"
+        )
+        st.markdown("<br>", unsafe_allow_html=True)
+
+    # Render DPIA Projects matrix
+    if projects_by_pathway["dpia"]:
+        dpia_phases = [
+            ("Screening", "Screening"),
+            ("Consultation", "Consultation"),
+            ("Risk Analysis", "Risk Analysis"),
+            ("Completion", "Completion")
+        ]
+        _render_project_matrix(
+            projects_by_pathway["dpia"],
+            "🔒 DPIA Projects",
+            dpia_phases,
+            "dpia_pathway"
         )
         st.markdown("<br>", unsafe_allow_html=True)
 
@@ -3799,6 +3827,505 @@ def show_ropa_record_view():
         st.rerun()
 
 
+def show_dpia_init_page():
+    """Display DPIA project initialization page"""
+    # If a project is already loaded, go directly to pathway
+    if 'neom_project' in st.session_state and st.session_state.neom_project:
+        # Check if this is actually a DPIA project
+        if st.session_state.neom_project.phases and "DPIA" in st.session_state.neom_project.project_name:
+            st.session_state.current_page = "dpia_pathway"
+            st.rerun()
+            return
+
+    # Return to home button
+    if st.button("🏠 Return to Home Page", key="home_dpia_init"):
+        st.session_state.current_page = "welcome"
+        st.rerun()
+
+    st.title("🔒 DPIA (Data Protection Impact Assessment) - Project Initialization")
+
+    st.markdown("""
+    ### Conduct a Comprehensive DPIA under UK GDPR
+
+    This pathway guides you through **8 structured steps** for conducting Data Protection Impact Assessments:
+
+    **Phase 1: Screening & Scoping**
+    1. 🔍 **Identify the Need** - Screen against mandatory DPIA criteria
+    2. 📋 **Describe the Processing** - Document nature, scope, context, and purposes
+
+    **Phase 2: Consultation & Assessment**
+    3. 💬 **Consider Consultation** - Engage data subjects, DPO, and stakeholders
+    4. ⚖️ **Assess Necessity** - Evaluate necessity and proportionality
+
+    **Phase 3: Risk Analysis**
+    5. ⚠️ **Identify Risks** - Assess likelihood and severity of privacy risks
+    6. 🛡️ **Mitigating Measures** - Develop strategies to reduce or eliminate risks
+
+    **Phase 4: Completion & Maintenance**
+    7. ✅ **Sign Off** - Document outcomes and determine ICO consultation needs
+    8. 🔄 **Monitor & Review** - Establish ongoing review and monitoring processes
+
+    Each step includes detailed guidance on **why it matters**, **what to do**, and **how to proceed**.
+    """)
+
+    st.markdown("---")
+    st.subheader("Project Information")
+
+    with st.form("dpia_form"):
+        project_name = st.text_input(
+            "Project Name *",
+            placeholder="e.g., Customer Profiling System DPIA",
+            help="Internal name for tracking this DPIA"
+        )
+
+        ai_system_name = st.text_input(
+            "Processing Activity / System Name *",
+            placeholder="e.g., AI-powered customer recommendation engine",
+            help="Name of the processing activity or system being assessed"
+        )
+
+        ai_system_purpose = st.text_area(
+            "Processing Purpose & Scope *",
+            placeholder="Describe what the processing will do, what data will be used, and its intended purpose...",
+            height=100,
+            help="Clear description of the processing activity and its objectives"
+        )
+
+        st.markdown("### DPIA Team Setup")
+        st.markdown("Define key stakeholders for conducting the DPIA")
+
+        col1, col2 = st.columns(2)
+
+        with col1:
+            project_lead_name = st.text_input("DPIA Lead Name *", help="Person responsible for conducting the DPIA")
+            project_lead_email = st.text_input("DPIA Lead Email *")
+
+        with col2:
+            pdpo_name = st.text_input("DPO Name *", help="Data Protection Officer (must be consulted)")
+            pdpo_email = st.text_input("DPO Email *")
+
+        st.markdown("### Notification Settings")
+        email_notifications = st.checkbox(
+            "Enable email notifications for review checkpoints",
+            value=True,
+            help="Send notifications when DPIA milestones are reached"
+        )
+
+        col1, col2 = st.columns([1, 1])
+
+        with col1:
+            if st.form_submit_button("← Back", use_container_width=True):
+                st.session_state.current_page = "welcome"
+                st.rerun()
+
+        with col2:
+            submit = st.form_submit_button("Create DPIA Project →", type="primary", use_container_width=True)
+
+        if submit:
+            if not all([project_name, ai_system_name, ai_system_purpose,
+                       project_lead_name, project_lead_email, pdpo_name, pdpo_email]):
+                st.error("Please fill in all required fields marked with *")
+            else:
+                # Create DPIA project
+                project_id = str(uuid.uuid4())
+
+                # Create project folder structure
+                st.session_state.storage_manager.create_project_folder(project_id)
+
+                # Initialize RACI matrix
+                raci_matrix = RACIMatrix(
+                    project_id=project_id,
+                    entries=[
+                        RACIEntry(
+                            task_name="DPIA Conduct and Review",
+                            responsible=[project_lead_email],
+                            accountable=[project_lead_email],
+                            consulted=[pdpo_email],
+                            informed=[]
+                        )
+                    ]
+                )
+
+                # Create DPIA project using NEOMProject structure
+                neom_project = NEOMProject(
+                    project_id=project_id,
+                    project_name=project_name,
+                    ai_system_name=ai_system_name,
+                    ai_system_purpose=ai_system_purpose,
+                    raci_matrix=raci_matrix,
+                    phases=[],
+                    evidence=[],
+                    pitstops=[],
+                    project_lead=project_lead_name,
+                    pdpo_contact=pdpo_name
+                )
+
+                # Generate DPIA pathway phases
+                dpia_pathway = DPIAPathway()
+                phases = dpia_pathway.create_phases(project_id)
+                neom_project.phases = phases
+
+                # Save project
+                st.session_state.storage_manager.save_project(neom_project)
+
+                # Store in session
+                st.session_state.neom_project = neom_project
+
+                # Send notification if enabled
+                if email_notifications and 'email_service' in st.session_state:
+                    try:
+                        st.session_state.email_service.send_project_started_notification(
+                            to_email=project_lead_email,
+                            project_name=project_name,
+                            ai_system_name=ai_system_name
+                        )
+                    except Exception as e:
+                        st.warning(f"Project created but email notification failed: {str(e)}")
+
+                st.success(f"✅ DPIA project '{project_name}' created successfully!")
+                st.session_state.current_page = "dpia_pathway"
+                st.rerun()
+
+
+def show_dpia_pathway_page():
+    """Display DPIA pathway with 8 structured steps"""
+    # Return to home button
+    if st.button("🏠 Return to Home Page", key="home_dpia_pathway"):
+        st.session_state.current_page = "welcome"
+        st.rerun()
+
+    project = st.session_state.get('neom_project')
+    if not project:
+        st.error("No DPIA project found. Please create a project first.")
+        if st.button("← Back to Home"):
+            st.session_state.current_page = "welcome"
+            st.rerun()
+        return
+
+    # Header
+    st.title(f"🔒 {project.project_name}")
+    st.markdown(f"**Processing Activity:** {project.ai_system_name}")
+    st.markdown(f"**Purpose:** {project.ai_system_purpose}")
+    st.markdown("---")
+
+    # Progress overview
+    total_steps = sum(len(phase.steps) for phase in project.phases)
+    completed_steps = sum(1 for phase in project.phases for step in phase.steps if step.status == StepStatus.COMPLETED)
+    progress_pct = int((completed_steps / total_steps) * 100) if total_steps > 0 else 0
+
+    col1, col2, col3 = st.columns(3)
+    with col1:
+        st.metric("Total Steps", f"{total_steps}")
+    with col2:
+        st.metric("Completed", f"{completed_steps}")
+    with col3:
+        st.metric("Progress", f"{progress_pct}%")
+
+    st.markdown("---")
+
+    # Display phases and steps
+    for phase_idx, phase in enumerate(project.phases):
+        with st.expander(f"### {phase.name}", expanded=(phase_idx == 0)):
+            st.markdown(f"*{phase.description}*")
+            st.markdown("")
+
+            for step in phase.steps:
+                # Step header with status
+                status_icon = {
+                    StepStatus.NOT_STARTED: "⚪",
+                    StepStatus.IN_PROGRESS: "🟡",
+                    StepStatus.COMPLETED: "✅"
+                }.get(step.status, "⚪")
+
+                st.markdown(f"## {status_icon} {step.title}")
+                st.markdown(f"**{step.description}**")
+
+                # Display guidance
+                if step.guidance:
+                    with st.expander("📖 Guidance - Why, What, How"):
+                        st.markdown(step.guidance)
+
+                # Display checklist
+                if step.checklist_items:
+                    with st.expander("✅ Key Requirements Checklist"):
+                        for item in step.checklist_items:
+                            st.markdown(f"- {item}")
+
+                st.markdown("### 📝 Document Your Response")
+
+                # AI Generation button
+                st.markdown("**🤖 AI-Assisted Completion:**")
+                st.info("💡 Upload your organization's documents using the sidebar, then click below to generate an analysis.")
+
+                question = f"{step.title}: {step.description}"
+
+                if st.button("✨ Generate Answer from Documents", key=f"rag_gen_{step.id}"):
+                    if not hasattr(st.session_state, 'rag_system') or not st.session_state.rag_system:
+                        st.warning("⚠️ Please upload documents using the sidebar first.")
+                    else:
+                        with st.spinner("Analyzing your project documents..."):
+                            result = st.session_state.rag_system.answer_question(question)
+
+                            if result["answer"] or result["guidance"]:
+                                st.session_state[f"draft_answer_{step.id}"] = result["answer"]
+                                st.session_state[f"draft_guidance_{step.id}"] = result["guidance"]
+                                st.session_state[f"draft_gap_analysis_{step.id}"] = result["gap_analysis"]
+                                st.session_state[f"draft_sources_{step.id}"] = result["sources"]
+                                st.session_state[f"draft_confidence_{step.id}"] = result["confidence"]
+                                st.rerun()
+                            else:
+                                st.warning("⚠️ Could not generate analysis. Please check your uploaded documents.")
+
+                # Three-box layout
+                col1, col2 = st.columns(2)
+
+                # Left box: Current State
+                with col1:
+                    st.markdown("**Your Organization's Current State**")
+                    if f"draft_answer_{step.id}" in st.session_state:
+                        confidence = st.session_state.get(f"draft_confidence_{step.id}", 0)
+                        confidence_color = "green" if confidence > 0.7 else "orange" if confidence > 0.5 else "red"
+                        st.markdown(f"**AI Analysis** (Confidence: :{confidence_color}[{confidence:.0%}])")
+
+                        edited_answer = st.text_area(
+                            "Information found in your documents:",
+                            value=st.session_state[f"draft_answer_{step.id}"],
+                            height=250,
+                            key=f"edit_answer_{step.id}",
+                            help="This is what the AI found in your uploaded documents. Edit as needed."
+                        )
+
+                        # Show sources
+                        if st.session_state.get(f"draft_sources_{step.id}"):
+                            with st.expander("📚 Sources"):
+                                for source in st.session_state[f"draft_sources_{step.id}"]:
+                                    st.caption(f"• {source}")
+                    else:
+                        st.text_area(
+                            "Your current state:",
+                            height=250,
+                            key=f"manual_answer_{step.id}",
+                            placeholder="Describe your organization's current approach to this requirement...",
+                            help="Enter your response manually or use AI generation above"
+                        )
+
+                # Right box: Model Answer
+                with col2:
+                    st.markdown("**Model Answer / Best Practice**")
+                    if f"draft_guidance_{step.id}" in st.session_state:
+                        guidance_text = st.session_state.get(f"draft_guidance_{step.id}", "")
+                        st.text_area(
+                            "Ideal answer should include:",
+                            value=guidance_text,
+                            height=250,
+                            disabled=True,
+                            key=f"guidance_display_{step.id}"
+                        )
+                    else:
+                        # Show checklist items as fallback
+                        if step.checklist_items:
+                            st.markdown("**Key requirements:**")
+                            checklist_preview = step.checklist_items[:5]  # Show first 5
+                            for item in checklist_preview:
+                                st.markdown(f"- {item}")
+                            if len(step.checklist_items) > 5:
+                                st.caption(f"... and {len(step.checklist_items) - 5} more (see checklist above)")
+
+                # Bottom box: Gap Analysis
+                st.markdown("**⚠️ Gap Analysis - What's Missing**")
+                if f"draft_gap_analysis_{step.id}" in st.session_state:
+                    gap_analysis_text = st.session_state.get(f"draft_gap_analysis_{step.id}", "")
+                    gap_analysis = st.text_area(
+                        "Gaps and areas for improvement:",
+                        value=gap_analysis_text,
+                        height=150,
+                        key=f"gap_analysis_{step.id}",
+                        help="AI-identified gaps between your current state and best practice. Edit as needed."
+                    )
+                else:
+                    gap_analysis = st.text_area(
+                        "Gaps and areas for improvement:",
+                        height=150,
+                        key=f"manual_gaps_{step.id}",
+                        placeholder="Identify what's missing or needs improvement...",
+                        help="Document gaps between your current state and requirements"
+                    )
+
+                # Action buttons
+                st.markdown("---")
+                col1, col2 = st.columns(2)
+
+                with col1:
+                    if step.status != StepStatus.IN_PROGRESS:
+                        if st.button("▶️ Mark as In Progress", key=f"start_{step.id}", use_container_width=True):
+                            step.status = StepStatus.IN_PROGRESS
+                            st.session_state.storage_manager.save_project(project)
+                            st.rerun()
+
+                with col2:
+                    if st.button("✅ Mark as Completed", key=f"complete_{step.id}", use_container_width=True, type="primary"):
+                        step.status = StepStatus.COMPLETED
+                        step.completed_at = datetime.now()
+
+                        # Save the answers to the step for DPIA record
+                        if f"edit_answer_{step.id}" in st.session_state:
+                            step.current_state_answer = st.session_state[f"edit_answer_{step.id}"]
+                        elif f"manual_answer_{step.id}" in st.session_state:
+                            step.current_state_answer = st.session_state[f"manual_answer_{step.id}"]
+
+                        # Save gap analysis
+                        if f"gap_analysis_{step.id}" in st.session_state:
+                            step.gap_analysis_answer = st.session_state[f"gap_analysis_{step.id}"]
+                        elif f"manual_gaps_{step.id}" in st.session_state:
+                            step.gap_analysis_answer = st.session_state[f"manual_gaps_{step.id}"]
+
+                        st.session_state.storage_manager.save_project(project)
+                        st.success(f"✅ {step.title} completed and saved to DPIA record!")
+                        st.rerun()
+
+                st.markdown("---")
+
+    # Completion check and DPIA Record button
+    if all(all(step.status == StepStatus.COMPLETED for step in phase.steps) for phase in project.phases):
+        st.balloons()
+        st.success("🎉 Congratulations! You've completed all 8 steps of the DPIA process!")
+        st.info("Your Data Protection Impact Assessment is now complete and ready for review.")
+
+        st.markdown("---")
+        if st.button("📄 View Complete DPIA Document", type="primary", use_container_width=True):
+            st.session_state.current_page = "dpia_record_view"
+            st.rerun()
+    elif any(step.status == StepStatus.COMPLETED for phase in project.phases for step in phase.steps):
+        # Show button if at least one step is completed
+        st.markdown("---")
+        st.markdown("### 📄 DPIA Document")
+        completed_count = sum(1 for phase in project.phases for step in phase.steps if step.status == StepStatus.COMPLETED)
+        st.info(f"You have completed {completed_count} of {total_steps} steps. View your progress in the DPIA document.")
+        if st.button("📄 View DPIA Document (In Progress)", use_container_width=True):
+            st.session_state.current_page = "dpia_record_view"
+            st.rerun()
+
+
+def show_dpia_record_view():
+    """Display the compiled DPIA document from all completed steps"""
+    st.markdown("# 🔒 Data Protection Impact Assessment (DPIA)")
+
+    # Return to pathway button at the top
+    col1, col2, col3 = st.columns([1, 2, 1])
+    with col1:
+        if st.button("← Return to Pathway", use_container_width=True):
+            st.session_state.current_page = "dpia_pathway"
+            st.rerun()
+
+    # Get current project
+    project = st.session_state.get('neom_project')
+    if not project:
+        st.error("No DPIA project found. Please start a new DPIA project.")
+        return
+
+    st.markdown("---")
+
+    # Project metadata section
+    st.markdown("## DPIA Information")
+    metadata_col1, metadata_col2 = st.columns(2)
+
+    with metadata_col1:
+        st.markdown(f"**Processing Activity:** {project.ai_system_name}")
+        st.markdown(f"**Project Name:** {project.project_name}")
+        if project.ai_system_purpose:
+            st.markdown(f"**Purpose & Scope:** {project.ai_system_purpose}")
+
+    with metadata_col2:
+        st.markdown(f"**Created:** {project.created_at.strftime('%d %B %Y')}")
+        st.markdown(f"**Last Updated:** {project.updated_at.strftime('%d %B %Y')}")
+
+        # Count completed steps
+        total_steps = sum(len(phase.steps) for phase in project.phases)
+        completed_steps = sum(1 for phase in project.phases for step in phase.steps if step.status == StepStatus.COMPLETED)
+        st.markdown(f"**Completion Status:** {completed_steps} of {total_steps} steps ({int(completed_steps/total_steps*100)}%)")
+
+    # DPIA Team information
+    if project.project_lead or project.pdpo_contact:
+        st.markdown("### DPIA Team")
+        team_col1, team_col2 = st.columns(2)
+        with team_col1:
+            if project.project_lead:
+                st.markdown(f"**DPIA Lead:** {project.project_lead}")
+        with team_col2:
+            if project.pdpo_contact:
+                st.markdown(f"**Data Protection Officer:** {project.pdpo_contact}")
+
+    st.markdown("---")
+
+    # Display completed steps organized by phase
+    st.markdown("## DPIA Assessment Details")
+
+    has_completed_steps = False
+
+    for phase in project.phases:
+        # Check if this phase has any completed steps
+        phase_completed_steps = [step for step in phase.steps if step.status == StepStatus.COMPLETED]
+
+        if phase_completed_steps:
+            has_completed_steps = True
+
+            # Phase header
+            st.markdown(f"### {phase.name}")
+            if phase.description:
+                st.markdown(f"*{phase.description}*")
+            st.markdown("")
+
+            # Display each completed step
+            for step in phase_completed_steps:
+                st.markdown(f"#### {step.title}")
+
+                # Current state answer
+                if step.current_state_answer:
+                    st.markdown("**Current State Assessment:**")
+                    st.markdown(f"> {step.current_state_answer}")
+                    st.markdown("")
+
+                # Gap analysis
+                if step.gap_analysis_answer:
+                    st.markdown("**Identified Gaps & Risks:**")
+                    st.warning(step.gap_analysis_answer)
+                    st.markdown("")
+
+                # Completion info
+                if step.completed_at:
+                    st.caption(f"✅ Completed on {step.completed_at.strftime('%d %B %Y at %H:%M')}")
+
+                # User notes if any
+                if step.user_notes:
+                    with st.expander("📝 Additional Notes"):
+                        st.markdown(step.user_notes)
+
+                st.markdown("---")
+
+    if not has_completed_steps:
+        st.info("No completed steps yet. Complete steps in the pathway to build your DPIA document.")
+
+    # Export options section
+    st.markdown("## Export Options")
+    st.markdown("**Export formats** (coming soon):")
+
+    export_col1, export_col2, export_col3 = st.columns(3)
+    with export_col1:
+        st.button("📥 Download as PDF", disabled=True, use_container_width=True)
+    with export_col2:
+        st.button("📥 Download as Word", disabled=True, use_container_width=True)
+    with export_col3:
+        st.button("📥 Submit to ICO", disabled=True, use_container_width=True, help="For high-risk DPIAs requiring ICO consultation")
+
+    st.caption("Export functionality will be available in a future update.")
+
+    # Footer with return button
+    st.markdown("---")
+    if st.button("← Return to Pathway", key="return_bottom", type="primary", use_container_width=True):
+        st.session_state.current_page = "dpia_pathway"
+        st.rerun()
+
+
 # Main app logic
 def main():
     """Main application logic"""
@@ -3830,6 +4357,12 @@ def main():
         show_ropa_pathway_page()
     elif st.session_state.current_page == "ropa_record_view":
         show_ropa_record_view()
+    elif st.session_state.current_page == "dpia_init":
+        show_dpia_init_page()
+    elif st.session_state.current_page == "dpia_pathway":
+        show_dpia_pathway_page()
+    elif st.session_state.current_page == "dpia_record_view":
+        show_dpia_record_view()
     elif st.session_state.current_page == "project_dashboard":
         show_project_dashboard()
 
