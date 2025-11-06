@@ -933,9 +933,10 @@ class ERMPathway(BasePathway):
         control_effectiveness = min(control_count * 0.5, 2.5)  # Max 2.5 reduction
 
         # Calculate overall control effectiveness (1-5 scale)
-        overall_effectiveness = min(
+        # Ensure minimum value of 1 to satisfy validation constraints
+        overall_effectiveness = max(1, min(
             int((avg_mitigation_effectiveness + control_effectiveness) / 2), 5
-        )
+        ))
 
         # Reduce likelihood and impact based on effectiveness
         reduction_factor = overall_effectiveness / 10  # 0.1 to 0.5
