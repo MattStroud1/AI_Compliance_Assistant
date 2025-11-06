@@ -4533,6 +4533,11 @@ def show_erm_init_page():
 def show_erm_step_1(project: ERMProject):
     """Step 1: Project Planning & Phase Identification"""
     st.markdown("### 🗂️ Step 1: Project Planning & Phase Identification")
+
+    # Show completion status
+    if project.step_1_completed:
+        st.success("✅ Step 1 Complete - You can review/edit below or proceed to Step 2")
+
     st.markdown("""
     In this step, we'll analyze your uploaded documents to extract project phases and activities.
     You can edit, add, or remove phases and activities as needed.
@@ -4593,6 +4598,7 @@ def show_erm_step_1(project: ERMProject):
     if project.phases:
         st.markdown("---")
         st.markdown("#### 📋 Project Phases & Activities")
+        st.info("👀 **Review the phases and activities below.** You can edit, add, or delete items as needed. Once you're satisfied, click the button at the bottom to proceed to Step 2.")
 
         for phase in project.phases:
             with st.expander(f"**{phase.name}** ({len(phase.activities)} activities)", expanded=True):
@@ -4633,11 +4639,22 @@ def show_erm_step_1(project: ERMProject):
 
         # Complete step button
         st.markdown("---")
-        if st.button("✅ Complete Step 1 & Continue to Risk Identification", type="primary", use_container_width=True):
-            project.step_1_completed = True
-            project.current_step = 2
-            st.session_state.erm_project = project  # Save changes to session state
-            st.success("✅ Step 1 completed!")
+
+        # Use a callback function for more reliable state updates
+        def complete_step_1():
+            """Callback to mark step 1 as complete"""
+            st.session_state.erm_project.step_1_completed = True
+            st.session_state.erm_project.current_step = 2
+
+        if st.button(
+            "✅ Complete Step 1 & Continue to Risk Identification",
+            type="primary",
+            use_container_width=True,
+            key="complete_step_1",
+            on_click=complete_step_1
+        ):
+            # After button click, show success and rerun
+            st.success("✅ Step 1 completed! Navigate to Step 2 tab above.")
             st.rerun()
     else:
         st.info("👆 Click 'Generate Project Plan with AI' to get started, or add phases manually below")
@@ -4707,11 +4724,19 @@ def show_erm_step_2(project: ERMProject):
 
         # Complete step
         st.markdown("---")
-        if st.button("✅ Complete Step 2 & Continue to Mitigations", type="primary", use_container_width=True):
-            project.step_2_completed = True
-            project.current_step = 3
-            st.session_state.erm_project = project  # Save changes to session state
-            st.success("✅ Step 2 completed!")
+        def complete_step_2():
+            """Callback to mark step 2 as complete"""
+            st.session_state.erm_project.step_2_completed = True
+            st.session_state.erm_project.current_step = 3
+
+        if st.button(
+            "✅ Complete Step 2 & Continue to Mitigations",
+            type="primary",
+            use_container_width=True,
+            key="complete_step_2",
+            on_click=complete_step_2
+        ):
+            st.success("✅ Step 2 completed! Navigate to Step 3 tab above.")
             st.rerun()
     else:
         st.info("👆 Click 'Identify Risks with AI' to analyze your activities")
@@ -4767,11 +4792,19 @@ def show_erm_step_3(project: ERMProject):
 
         # Complete step
         st.markdown("---")
-        if st.button("✅ Complete Step 3 & Continue to Controls", type="primary", use_container_width=True):
-            project.step_3_completed = True
-            project.current_step = 4
-            st.session_state.erm_project = project  # Save changes to session state
-            st.success("✅ Step 3 completed!")
+        def complete_step_3():
+            """Callback to mark step 3 as complete"""
+            st.session_state.erm_project.step_3_completed = True
+            st.session_state.erm_project.current_step = 4
+
+        if st.button(
+            "✅ Complete Step 3 & Continue to Controls",
+            type="primary",
+            use_container_width=True,
+            key="complete_step_3",
+            on_click=complete_step_3
+        ):
+            st.success("✅ Step 3 completed! Navigate to Step 4 tab above.")
             st.rerun()
     else:
         st.info("👆 Click 'Generate Mitigating Measures with AI' to create mitigation strategies")
@@ -4835,11 +4868,19 @@ def show_erm_step_4(project: ERMProject):
 
         # Complete step
         st.markdown("---")
-        if st.button("✅ Complete Step 4 & Continue to Residual Risk Assessment", type="primary", use_container_width=True):
-            project.step_4_completed = True
-            project.current_step = 5
-            st.session_state.erm_project = project  # Save changes to session state
-            st.success("✅ Step 4 completed!")
+        def complete_step_4():
+            """Callback to mark step 4 as complete"""
+            st.session_state.erm_project.step_4_completed = True
+            st.session_state.erm_project.current_step = 5
+
+        if st.button(
+            "✅ Complete Step 4 & Continue to Residual Risk Assessment",
+            type="primary",
+            use_container_width=True,
+            key="complete_step_4",
+            on_click=complete_step_4
+        ):
+            st.success("✅ Step 4 completed! Navigate to Step 5 tab above.")
             st.rerun()
     else:
         st.info("👆 Click 'Map Controls with AI' to assign controls")
