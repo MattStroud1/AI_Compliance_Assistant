@@ -292,13 +292,15 @@ class ERMPathway(BasePathway):
         self,
         activities: List[ProjectActivity],
         risk_register_df: Optional[pd.DataFrame] = None,
+        rag_system: Optional[Any] = None,
     ) -> List[IdentifiedRisk]:
         """
         Identify risks for each activity using AI and knowledge base (sequential).
 
         Args:
             activities: List of project activities
-            risk_register_df: Risk register DataFrame (optional)
+            risk_register_df: Risk register DataFrame (optional, deprecated - use rag_system)
+            rag_system: RAG system with risk register ingested (preferred)
 
         Returns:
             List of identified risks
@@ -308,7 +310,7 @@ class ERMPathway(BasePathway):
         for activity in activities:
             # Use AI to identify relevant risks
             activity_risks = self._identify_risks_for_activity(
-                activity, risk_register_df
+                activity, risk_register_df, rag_system
             )
             risks.extend(activity_risks)
 
@@ -318,6 +320,7 @@ class ERMPathway(BasePathway):
         self,
         activities: List[ProjectActivity],
         risk_register_df: Optional[pd.DataFrame] = None,
+        rag_system: Optional[Any] = None,
         progress_callback: Optional[callable] = None,
         max_workers: int = 5,
     ) -> List[IdentifiedRisk]:
@@ -329,7 +332,8 @@ class ERMPathway(BasePathway):
 
         Args:
             activities: List of project activities
-            risk_register_df: Risk register DataFrame (optional)
+            risk_register_df: Risk register DataFrame (optional, deprecated - use rag_system)
+            rag_system: RAG system with risk register ingested (preferred)
             progress_callback: Optional callback function(current, total)
             max_workers: Maximum number of parallel API calls (default: 5)
 
@@ -344,7 +348,7 @@ class ERMPathway(BasePathway):
 
         # Function to process a single activity
         def process_activity(activity):
-            return self._identify_risks_for_activity(activity, risk_register_df)
+            return self._identify_risks_for_activity(activity, risk_register_df, rag_system)
 
         # Process activities in parallel
         with ThreadPoolExecutor(max_workers=max_workers) as executor:
@@ -380,15 +384,37 @@ class ERMPathway(BasePathway):
         self,
         activity: ProjectActivity,
         risk_register_df: Optional[pd.DataFrame],
+        rag_system: Optional[Any] = None,
     ) -> List[IdentifiedRisk]:
         """Identify risks for a single activity"""
 
-        # Build context from risk register if available
+        # Build context from risk register
         kb_context = ""
-        if risk_register_df is not None:
+
+        # Prefer RAG system for semantic retrieval
+        if rag_system is not None and hasattr(rag_system, 'retrieve_knowledge_base_entries'):
+            try:
+                # Use RAG to retrieve most relevant risks
+                query = f"Activity: {activity.name}. Description: {activity.description or 'N/A'}. What are the relevant construction risks?"
+                relevant_risks = rag_system.retrieve_knowledge_base_entries(
+                    query=query,
+                    kb_type="risk_register",
+                    top_k=10
+                )
+
+                if relevant_risks:
+                    kb_context = "Most relevant risks from knowledge base (semantic search):\n"
+                    for i, risk_entry in enumerate(relevant_risks, 1):
+                        kb_context += f"\n{i}. [Relevance: {risk_entry['similarity']:.0%}]\n{risk_entry['content']}\n"
+            except Exception as e:
+                print(f"Warning: RAG retrieval failed, falling back to random sampling: {e}")
+                rag_system = None  # Fall back to old method
+
+        # Fallback: use random sampling if RAG not available
+        if not kb_context and risk_register_df is not None:
             # Sample 20 random risks from the register for context
             sample_risks = risk_register_df.sample(min(20, len(risk_register_df)))
-            kb_context = "Reference risks from knowledge base:\n"
+            kb_context = "Reference risks from knowledge base (random sample):\n"
             for _, row in sample_risks.iterrows():
                 kb_context += f"- {row.to_dict()}\n"
 
@@ -639,6 +665,7 @@ class ERMPathway(BasePathway):
         risks: List[IdentifiedRisk],
         mitigations: List[MitigatingMeasure],
         controls_kb_df: Optional[pd.DataFrame] = None,
+        rag_system: Optional[Any] = None,
     ) -> List[ControlMapping]:
         """
         Map controls from knowledge base to mitigated risks (sequential).
@@ -646,7 +673,8 @@ class ERMPathway(BasePathway):
         Args:
             risks: List of identified risks
             mitigations: List of mitigating measures
-            controls_kb_df: Controls knowledge base DataFrame (optional)
+            controls_kb_df: Controls knowledge base DataFrame (optional, deprecated - use rag_system)
+            rag_system: RAG system with controls KB ingested (preferred)
 
         Returns:
             List of control mappings
@@ -660,7 +688,7 @@ class ERMPathway(BasePathway):
             for mitigation in risk_mitigations:
                 # Map controls to this risk/mitigation pair
                 controls = self._map_controls_for_mitigation(
-                    risk, mitigation, controls_kb_df
+                    risk, mitigation, controls_kb_df, rag_system
                 )
                 control_mappings.extend(controls)
 
@@ -671,6 +699,7 @@ class ERMPathway(BasePathway):
         risks: List[IdentifiedRisk],
         mitigations: List[MitigatingMeasure],
         controls_kb_df: Optional[pd.DataFrame] = None,
+        rag_system: Optional[Any] = None,
         progress_callback: Optional[callable] = None,
         max_workers: int = 5,
     ) -> List[ControlMapping]:
@@ -680,7 +709,8 @@ class ERMPathway(BasePathway):
         Args:
             risks: List of identified risks
             mitigations: List of mitigating measures
-            controls_kb_df: Controls knowledge base DataFrame (optional)
+            controls_kb_df: Controls knowledge base DataFrame (optional, deprecated - use rag_system)
+            rag_system: RAG system with controls KB ingested (preferred)
             progress_callback: Optional callback function(current, total)
             max_workers: Maximum number of parallel API calls (default: 5)
 
@@ -702,7 +732,7 @@ class ERMPathway(BasePathway):
         total = len(tasks)
 
         def process_risk_mitigation(risk, mitigation):
-            return self._map_controls_for_mitigation(risk, mitigation, controls_kb_df)
+            return self._map_controls_for_mitigation(risk, mitigation, controls_kb_df, rag_system)
 
         with ThreadPoolExecutor(max_workers=max_workers) as executor:
             future_to_task = {
@@ -735,14 +765,36 @@ class ERMPathway(BasePathway):
         risk: IdentifiedRisk,
         mitigation: MitigatingMeasure,
         controls_kb_df: Optional[pd.DataFrame],
+        rag_system: Optional[Any] = None,
     ) -> List[ControlMapping]:
         """Map controls for a specific risk/mitigation pair"""
 
-        # Build context from controls KB if available
+        # Build context from controls KB
         kb_context = ""
-        if controls_kb_df is not None:
+
+        # Prefer RAG system for semantic retrieval
+        if rag_system is not None and hasattr(rag_system, 'retrieve_knowledge_base_entries'):
+            try:
+                # Use RAG to retrieve most relevant controls
+                query = f"Risk: {risk.risk_description}. Category: {risk.category.value}. Mitigation: {mitigation.measure_description}. What are appropriate GRC controls?"
+                relevant_controls = rag_system.retrieve_knowledge_base_entries(
+                    query=query,
+                    kb_type="controls",
+                    top_k=8
+                )
+
+                if relevant_controls:
+                    kb_context = "Most relevant controls from knowledge base (semantic search):\n"
+                    for i, control_entry in enumerate(relevant_controls, 1):
+                        kb_context += f"\n{i}. [Relevance: {control_entry['similarity']:.0%}]\n{control_entry['content']}\n"
+            except Exception as e:
+                print(f"Warning: RAG retrieval failed for controls, falling back to random sampling: {e}")
+                rag_system = None  # Fall back to old method
+
+        # Fallback: use random sampling if RAG not available
+        if not kb_context and controls_kb_df is not None:
             sample_controls = controls_kb_df.sample(min(15, len(controls_kb_df)))
-            kb_context = "Reference controls from knowledge base:\n"
+            kb_context = "Reference controls from knowledge base (random sample):\n"
             for _, row in sample_controls.iterrows():
                 kb_context += f"- {row.to_dict()}\n"
 

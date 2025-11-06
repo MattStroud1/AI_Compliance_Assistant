@@ -14,6 +14,13 @@ import json
 
 from openai import OpenAI
 
+# Excel reading functionality
+try:
+    import pandas as pd
+    PANDAS_AVAILABLE = True
+except ImportError:
+    PANDAS_AVAILABLE = False
+
 
 @dataclass
 class DocumentChunk:
@@ -380,6 +387,96 @@ Gap Analysis:"""
             "sources": sources,
             "confidence": float(avg_similarity)
         }
+
+    def add_excel_knowledge_base(self, filepath: str, kb_type: str = "generic") -> int:
+        """
+        Load an Excel file and add each row as a document chunk to the RAG system.
+
+        Args:
+            filepath: Path to Excel file
+            kb_type: Type of knowledge base ("risk_register" or "controls" or "generic")
+
+        Returns:
+            Number of rows added to the RAG system
+        """
+        if not PANDAS_AVAILABLE:
+            print("pandas not available - cannot load Excel files")
+            return 0
+
+        try:
+            # Load Excel file
+            df = pd.read_excel(filepath)
+
+            # Convert each row to a text document
+            documents = []
+            for idx, row in df.iterrows():
+                # Convert row to a readable text format
+                row_text_parts = []
+                for col_name, value in row.items():
+                    if pd.notna(value):  # Skip NaN values
+                        row_text_parts.append(f"{col_name}: {value}")
+
+                row_text = "\n".join(row_text_parts)
+
+                # Create a document for this row
+                doc = {
+                    'id': f"{kb_type}_{idx}",
+                    'name': f"{kb_type.replace('_', ' ').title()} - Row {idx + 1}",
+                    'content': row_text
+                }
+                documents.append(doc)
+
+            # Add documents to RAG system
+            self.add_documents(documents)
+
+            print(f"✅ Added {len(documents)} rows from {kb_type} to RAG system")
+            return len(documents)
+
+        except FileNotFoundError:
+            print(f"❌ File not found: {filepath}")
+            return 0
+        except Exception as e:
+            print(f"❌ Error loading Excel file: {e}")
+            return 0
+
+    def retrieve_knowledge_base_entries(
+        self,
+        query: str,
+        kb_type: Optional[str] = None,
+        top_k: int = 5
+    ) -> List[Dict[str, Any]]:
+        """
+        Retrieve relevant knowledge base entries for a query.
+
+        Args:
+            query: Search query describing what you're looking for
+            kb_type: Optional filter by KB type ("risk_register" or "controls")
+            top_k: Number of entries to retrieve
+
+        Returns:
+            List of dicts with 'content', 'similarity', and 'source' keys
+        """
+        # Retrieve chunks
+        chunks = self.retrieve(query, top_k=top_k * 2)  # Get more to allow filtering
+
+        # Filter by kb_type if specified
+        if kb_type:
+            chunks = [(chunk, score) for chunk, score in chunks if kb_type in chunk.chunk_id]
+
+        # Take top_k after filtering
+        chunks = chunks[:top_k]
+
+        # Format results
+        results = []
+        for chunk, score in chunks:
+            results.append({
+                'content': chunk.content,
+                'similarity': float(score),
+                'source': chunk.document_name,
+                'chunk_id': chunk.chunk_id
+            })
+
+        return results
 
     def save(self, filepath: str):
         """Save RAG state to disk"""

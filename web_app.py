@@ -4518,6 +4518,40 @@ def show_erm_init_page():
                 current_step=1,
             )
 
+            # Ingest knowledge base files into RAG system
+            if st.session_state.rag_system:
+                with st.spinner("Loading knowledge base files into RAG system..."):
+                    kb_loaded = False
+
+                    # Load risk register
+                    if risk_file_exists:
+                        try:
+                            num_risks = st.session_state.rag_system.add_excel_knowledge_base(
+                                risk_register_path,
+                                kb_type="risk_register"
+                            )
+                            if num_risks > 0:
+                                st.success(f"✅ Loaded {num_risks} risks from knowledge base into RAG")
+                                kb_loaded = True
+                        except Exception as e:
+                            st.warning(f"⚠️ Could not load risk register into RAG: {e}")
+
+                    # Load controls KB
+                    if controls_file_exists:
+                        try:
+                            num_controls = st.session_state.rag_system.add_excel_knowledge_base(
+                                controls_kb_path,
+                                kb_type="controls"
+                            )
+                            if num_controls > 0:
+                                st.success(f"✅ Loaded {num_controls} controls from knowledge base into RAG")
+                                kb_loaded = True
+                        except Exception as e:
+                            st.warning(f"⚠️ Could not load controls KB into RAG: {e}")
+
+                    if kb_loaded:
+                        st.info("🎯 Knowledge bases loaded - AI will use semantic search for better risk and control suggestions!")
+
             st.session_state.erm_project = erm_project
             st.session_state.current_page = "erm_pathway"
             st.success(f"✅ Created ERM project: {project_name}")
@@ -4720,10 +4754,11 @@ def show_erm_step_2(project: ERMProject):
             # Identify risks with progress tracking
             identified_risks = []
             try:
-                # Use parallel processing
+                # Use parallel processing with RAG system for semantic search
                 identified_risks = pathway.identify_risks_for_activities_parallel(
                     all_activities,
                     risk_register_df,
+                    rag_system=st.session_state.rag_system,
                     progress_callback=lambda current, total: (
                         progress_bar.progress(current / total),
                         status_text.text(f"Processing activity {current}/{total}...")
@@ -4940,11 +4975,12 @@ def show_erm_step_4(project: ERMProject):
             status_text = st.empty()
 
             try:
-                # Map controls with progress tracking
+                # Map controls with progress tracking using RAG system for semantic search
                 controls = pathway.map_controls_to_risks_parallel(
                     project.risks,
                     project.mitigations,
                     controls_kb_df,
+                    rag_system=st.session_state.rag_system,
                     progress_callback=lambda current, total: (
                         progress_bar.progress(current / total),
                         status_text.text(f"Processing pair {current}/{total}...")
