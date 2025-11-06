@@ -4646,41 +4646,39 @@ def show_erm_step_1(project: ERMProject):
         # Complete step button
         st.markdown("---")
 
-        # Use session state to track button clicks more reliably
-        if "step_1_complete_clicked" not in st.session_state:
-            st.session_state.step_1_complete_clicked = False
-
-        button_clicked = st.button(
-            "✅ Complete Step 1 & Continue to Risk Identification",
-            type="primary",
-            use_container_width=True,
-            key="complete_step_1"
-        )
-
-        if button_clicked:
-            print("DEBUG: Step 1 complete button was clicked!")  # Debug output
-            # IMPORTANT: Pydantic models need to be replaced, not mutated in session state
-            # Create updated project with the completed flag
+        # Callback function to update state (runs BEFORE the rerun)
+        def complete_step_1_callback():
+            """Update project state when button is clicked"""
+            print("DEBUG: Step 1 complete button callback triggered!")
+            current_project = st.session_state.erm_project
             try:
                 # Try Pydantic v2 method
-                updated_project = project.model_copy(update={
+                updated_project = current_project.model_copy(update={
                     "step_1_completed": True,
                     "current_step": 2
                 })
             except AttributeError:
                 # Fallback to Pydantic v1 method
-                updated_project = project.copy(update={
+                updated_project = current_project.copy(update={
                     "step_1_completed": True,
                     "current_step": 2
                 })
-            # Replace the entire project in session state
             st.session_state.erm_project = updated_project
-            print(f"DEBUG: step_1_completed is now: {st.session_state.erm_project.step_1_completed}")
-            print(f"DEBUG: current_step is now: {st.session_state.erm_project.current_step}")
-            # Show temporary message before rerun
-            st.write("DEBUG: About to rerun...")
-            st.success("✅ Step 1 completed! Navigate to Step 2 tab above.")
-            st.rerun()
+            print(f"DEBUG: Updated - step_1_completed: {st.session_state.erm_project.step_1_completed}")
+            print(f"DEBUG: Updated - current_step: {st.session_state.erm_project.current_step}")
+
+        # Button with callback - no manual rerun needed!
+        st.button(
+            "✅ Complete Step 1 & Continue to Risk Identification",
+            type="primary",
+            use_container_width=True,
+            key="complete_step_1",
+            on_click=complete_step_1_callback
+        )
+
+        # Show message if step is completed
+        if project.step_1_completed:
+            st.success("✅ Step 1 completed! Click the '2️⃣ Risk Identification' tab above to continue.")
     else:
         st.info("👆 Click 'Generate Project Plan with AI' to get started, or add phases manually below")
 
@@ -4749,20 +4747,32 @@ def show_erm_step_2(project: ERMProject):
 
         # Complete step
         st.markdown("---")
-        def complete_step_2():
-            """Callback to mark step 2 as complete"""
-            st.session_state.erm_project.step_2_completed = True
-            st.session_state.erm_project.current_step = 3
 
-        if st.button(
+        def complete_step_2_callback():
+            """Update project state when button is clicked"""
+            current_project = st.session_state.erm_project
+            try:
+                updated_project = current_project.model_copy(update={
+                    "step_2_completed": True,
+                    "current_step": 3
+                })
+            except AttributeError:
+                updated_project = current_project.copy(update={
+                    "step_2_completed": True,
+                    "current_step": 3
+                })
+            st.session_state.erm_project = updated_project
+
+        st.button(
             "✅ Complete Step 2 & Continue to Mitigations",
             type="primary",
             use_container_width=True,
             key="complete_step_2",
-            on_click=complete_step_2
-        ):
-            st.success("✅ Step 2 completed! Navigate to Step 3 tab above.")
-            st.rerun()
+            on_click=complete_step_2_callback
+        )
+
+        if project.step_2_completed:
+            st.success("✅ Step 2 completed! Click the '3️⃣ Mitigating Measures' tab above to continue.")
     else:
         st.info("👆 Click 'Identify Risks with AI' to analyze your activities")
 
@@ -4817,20 +4827,32 @@ def show_erm_step_3(project: ERMProject):
 
         # Complete step
         st.markdown("---")
-        def complete_step_3():
-            """Callback to mark step 3 as complete"""
-            st.session_state.erm_project.step_3_completed = True
-            st.session_state.erm_project.current_step = 4
 
-        if st.button(
+        def complete_step_3_callback():
+            """Update project state when button is clicked"""
+            current_project = st.session_state.erm_project
+            try:
+                updated_project = current_project.model_copy(update={
+                    "step_3_completed": True,
+                    "current_step": 4
+                })
+            except AttributeError:
+                updated_project = current_project.copy(update={
+                    "step_3_completed": True,
+                    "current_step": 4
+                })
+            st.session_state.erm_project = updated_project
+
+        st.button(
             "✅ Complete Step 3 & Continue to Controls",
             type="primary",
             use_container_width=True,
             key="complete_step_3",
-            on_click=complete_step_3
-        ):
-            st.success("✅ Step 3 completed! Navigate to Step 4 tab above.")
-            st.rerun()
+            on_click=complete_step_3_callback
+        )
+
+        if project.step_3_completed:
+            st.success("✅ Step 3 completed! Click the '4️⃣ Control Mapping' tab above to continue.")
     else:
         st.info("👆 Click 'Generate Mitigating Measures with AI' to create mitigation strategies")
 
@@ -4893,20 +4915,32 @@ def show_erm_step_4(project: ERMProject):
 
         # Complete step
         st.markdown("---")
-        def complete_step_4():
-            """Callback to mark step 4 as complete"""
-            st.session_state.erm_project.step_4_completed = True
-            st.session_state.erm_project.current_step = 5
 
-        if st.button(
+        def complete_step_4_callback():
+            """Update project state when button is clicked"""
+            current_project = st.session_state.erm_project
+            try:
+                updated_project = current_project.model_copy(update={
+                    "step_4_completed": True,
+                    "current_step": 5
+                })
+            except AttributeError:
+                updated_project = current_project.copy(update={
+                    "step_4_completed": True,
+                    "current_step": 5
+                })
+            st.session_state.erm_project = updated_project
+
+        st.button(
             "✅ Complete Step 4 & Continue to Residual Risk Assessment",
             type="primary",
             use_container_width=True,
             key="complete_step_4",
-            on_click=complete_step_4
-        ):
-            st.success("✅ Step 4 completed! Navigate to Step 5 tab above.")
-            st.rerun()
+            on_click=complete_step_4_callback
+        )
+
+        if project.step_4_completed:
+            st.success("✅ Step 4 completed! Click the '5️⃣ Residual Risk Assessment' tab above to continue.")
     else:
         st.info("👆 Click 'Map Controls with AI' to assign controls")
 
