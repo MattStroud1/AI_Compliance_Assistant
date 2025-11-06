@@ -4534,6 +4534,12 @@ def show_erm_step_1(project: ERMProject):
     """Step 1: Project Planning & Phase Identification"""
     st.markdown("### 🗂️ Step 1: Project Planning & Phase Identification")
 
+    # DEBUG: Show current state
+    with st.expander("🔍 Debug Info (click to expand)", expanded=False):
+        st.write(f"step_1_completed: {project.step_1_completed}")
+        st.write(f"current_step: {project.current_step}")
+        st.write(f"Number of phases: {len(project.phases)}")
+
     # Show completion status
     if project.step_1_completed:
         st.success("✅ Step 1 Complete - You can review/edit below or proceed to Step 2")
@@ -4640,20 +4646,39 @@ def show_erm_step_1(project: ERMProject):
         # Complete step button
         st.markdown("---")
 
-        # Use a callback function for more reliable state updates
-        def complete_step_1():
-            """Callback to mark step 1 as complete"""
-            st.session_state.erm_project.step_1_completed = True
-            st.session_state.erm_project.current_step = 2
+        # Use session state to track button clicks more reliably
+        if "step_1_complete_clicked" not in st.session_state:
+            st.session_state.step_1_complete_clicked = False
 
-        if st.button(
+        button_clicked = st.button(
             "✅ Complete Step 1 & Continue to Risk Identification",
             type="primary",
             use_container_width=True,
-            key="complete_step_1",
-            on_click=complete_step_1
-        ):
-            # After button click, show success and rerun
+            key="complete_step_1"
+        )
+
+        if button_clicked:
+            print("DEBUG: Step 1 complete button was clicked!")  # Debug output
+            # IMPORTANT: Pydantic models need to be replaced, not mutated in session state
+            # Create updated project with the completed flag
+            try:
+                # Try Pydantic v2 method
+                updated_project = project.model_copy(update={
+                    "step_1_completed": True,
+                    "current_step": 2
+                })
+            except AttributeError:
+                # Fallback to Pydantic v1 method
+                updated_project = project.copy(update={
+                    "step_1_completed": True,
+                    "current_step": 2
+                })
+            # Replace the entire project in session state
+            st.session_state.erm_project = updated_project
+            print(f"DEBUG: step_1_completed is now: {st.session_state.erm_project.step_1_completed}")
+            print(f"DEBUG: current_step is now: {st.session_state.erm_project.current_step}")
+            # Show temporary message before rerun
+            st.write("DEBUG: About to rerun...")
             st.success("✅ Step 1 completed! Navigate to Step 2 tab above.")
             st.rerun()
     else:
