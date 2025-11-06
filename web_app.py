@@ -239,7 +239,8 @@ with st.sidebar:
                                     st.session_state.rag_documents.append({
                                         "id": doc.id,
                                         "name": doc.filename,
-                                        "size": len(doc.content)
+                                        "size": len(doc.content),
+                                        "content": doc.content
                                     })
 
                             except Exception as e:
@@ -4546,7 +4547,7 @@ def show_erm_step_1(project: ERMProject):
                     for doc in st.session_state.rag_documents:
                         doc_contents.append({
                             "name": doc["name"],
-                            "content": st.session_state.rag_system.documents[doc["id"]]["content"]
+                            "content": doc["content"]
                         })
 
                 # Generate project plan
