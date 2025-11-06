@@ -5011,9 +5011,8 @@ def show_erm_pathway_page():
             st.rerun()
         return
 
+    # Header - get fresh project state for display
     project = st.session_state.erm_project
-
-    # Header
     st.title(f"🏗️ {project.project_name}")
     if project.project_description:
         st.markdown(f"*{project.project_description}*")
@@ -5031,25 +5030,28 @@ def show_erm_pathway_page():
         "5️⃣ Residual Risk Assessment"
     ])
 
+    # IMPORTANT: Each tab gets the project directly from session state
+    # This ensures they always have the latest version after updates
+
     # STEP 1: Project Planning
     with step_tabs[0]:
-        show_erm_step_1(project)
+        show_erm_step_1(st.session_state.erm_project)
 
     # STEP 2: Risk Identification
     with step_tabs[1]:
-        show_erm_step_2(project)
+        show_erm_step_2(st.session_state.erm_project)
 
     # STEP 3: Mitigating Measures
     with step_tabs[2]:
-        show_erm_step_3(project)
+        show_erm_step_3(st.session_state.erm_project)
 
     # STEP 4: Control Mapping
     with step_tabs[3]:
-        show_erm_step_4(project)
+        show_erm_step_4(st.session_state.erm_project)
 
     # STEP 5: Residual Risk Assessment
     with step_tabs[4]:
-        show_erm_step_5(project)
+        show_erm_step_5(st.session_state.erm_project)
 
     # Bottom navigation
     st.markdown("---")
