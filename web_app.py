@@ -4453,15 +4453,15 @@ def show_erm_init_page():
     with col1:
         risk_register_path = st.text_input(
             "Risk Register Path",
-            value="/Users/matthewstroud/AI_Compliance_Assistant/2/GRC_Controls_Knowledge_Base/Full_Risk_Register_Construction_Focused.xlsx",
+            value="/Users/matthewstroud/AI_Compliance_Assistant2/GRC_Controls_Knowledge_Base/Full_Risk_Register_Construction_Focused.xlsx",
             help="Path to Full_Risk_Register_Construction_Focused.xlsx"
         )
 
     with col2:
         controls_kb_path = st.text_input(
             "Controls Knowledge Base Path",
-            value="/Users/matthewstroud/AI_Compliance_Assistant/2/GRC_Controls_Knowledge_Base/GRC Controls Knowledge_Base.xlsx",
-            help="Path to GRC Controls Knowledge_Base.xlsx"
+            value="/Users/matthewstroud/AI_Compliance_Assistant2/GRC_Controls_Knowledge_Base/GRC Controls Data Base_Synthetic.xlsx",
+            help="Path to GRC Controls Data Base_Synthetic.xlsx"
         )
 
     # Check if files exist
