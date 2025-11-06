@@ -4636,6 +4636,7 @@ def show_erm_step_1(project: ERMProject):
         if st.button("✅ Complete Step 1 & Continue to Risk Identification", type="primary", use_container_width=True):
             project.step_1_completed = True
             project.current_step = 2
+            st.session_state.erm_project = project  # Save changes to session state
             st.success("✅ Step 1 completed!")
             st.rerun()
     else:
@@ -4709,6 +4710,7 @@ def show_erm_step_2(project: ERMProject):
         if st.button("✅ Complete Step 2 & Continue to Mitigations", type="primary", use_container_width=True):
             project.step_2_completed = True
             project.current_step = 3
+            st.session_state.erm_project = project  # Save changes to session state
             st.success("✅ Step 2 completed!")
             st.rerun()
     else:
@@ -4768,6 +4770,7 @@ def show_erm_step_3(project: ERMProject):
         if st.button("✅ Complete Step 3 & Continue to Controls", type="primary", use_container_width=True):
             project.step_3_completed = True
             project.current_step = 4
+            st.session_state.erm_project = project  # Save changes to session state
             st.success("✅ Step 3 completed!")
             st.rerun()
     else:
@@ -4835,6 +4838,7 @@ def show_erm_step_4(project: ERMProject):
         if st.button("✅ Complete Step 4 & Continue to Residual Risk Assessment", type="primary", use_container_width=True):
             project.step_4_completed = True
             project.current_step = 5
+            st.session_state.erm_project = project  # Save changes to session state
             st.success("✅ Step 4 completed!")
             st.rerun()
     else:
@@ -4924,6 +4928,7 @@ def show_erm_step_5(project: ERMProject):
         st.markdown("---")
         if st.button("✅ Complete ERM Assessment", type="primary", use_container_width=True):
             project.step_5_completed = True
+            st.session_state.erm_project = project  # Save changes to session state
             st.success("🎉 ERM Assessment Complete!")
             st.balloons()
             st.rerun()
