@@ -4896,19 +4896,96 @@ def show_erm_step_3(project: ERMProject):
             if risk_mitigations:
                 with st.expander(f"**Risk:** {risk.risk_description}", expanded=False):
                     st.markdown(f"*Category: {risk.category.value} | Inherent Score: {risk.inherent_risk_score}*")
+                    st.markdown("---")
 
                     for mitigation in risk_mitigations:
-                        st.markdown(f"**Mitigation:** {mitigation.measure_description}")
-                        col1, col2, col3, col4 = st.columns(4)
-                        with col1:
-                            st.caption(f"👤 {mitigation.responsible_party or 'Not assigned'}")
-                        with col2:
-                            st.caption(f"📅 {mitigation.timeline or 'TBD'}")
-                        with col3:
-                            st.caption(f"⭐ Effectiveness: {mitigation.effectiveness_rating}/5")
-                        with col4:
-                            st.caption(f"📊 Status: {mitigation.implementation_status}")
+                        # Create columns for mitigation content and delete button
+                        mitigation_col, delete_col = st.columns([0.95, 0.05])
+
+                        with mitigation_col:
+                            st.markdown(f"**Mitigation:** {mitigation.measure_description}")
+                            col1, col2, col3, col4 = st.columns(4)
+                            with col1:
+                                st.caption(f"👤 {mitigation.responsible_party or 'Not assigned'}")
+                            with col2:
+                                st.caption(f"📅 {mitigation.timeline or 'TBD'}")
+                            with col3:
+                                st.caption(f"⭐ Effectiveness: {mitigation.effectiveness_rating}/5")
+                            with col4:
+                                st.caption(f"📊 Status: {mitigation.implementation_status}")
+
+                        with delete_col:
+                            # Delete button for this mitigation
+                            if st.button("🗑️", key=f"delete_mitigation_{mitigation.id}", help="Delete this mitigation"):
+                                # Remove this mitigation from the list
+                                updated_mitigations = [m for m in project.mitigations if m.id != mitigation.id]
+                                updated_project = project.model_copy(update={"mitigations": updated_mitigations})
+                                st.session_state.erm_project = updated_project
+                                st.rerun()
+
                         st.markdown("---")
+
+                    # Add custom mitigation form
+                    st.markdown("##### ➕ Add Your Own Mitigation")
+                    with st.form(key=f"add_mitigation_form_{risk.id}"):
+                        custom_description = st.text_area(
+                            "Mitigation Description",
+                            placeholder="Describe your custom mitigation measure...",
+                            key=f"custom_desc_{risk.id}"
+                        )
+
+                        col1, col2 = st.columns(2)
+                        with col1:
+                            custom_responsible = st.text_input(
+                                "Responsible Party",
+                                placeholder="e.g., Project Manager",
+                                key=f"custom_resp_{risk.id}"
+                            )
+                            custom_effectiveness = st.slider(
+                                "Effectiveness Rating",
+                                min_value=1,
+                                max_value=5,
+                                value=3,
+                                key=f"custom_eff_{risk.id}"
+                            )
+                        with col2:
+                            custom_timeline = st.text_input(
+                                "Timeline",
+                                placeholder="e.g., 2 weeks",
+                                key=f"custom_timeline_{risk.id}"
+                            )
+                            custom_status = st.selectbox(
+                                "Status",
+                                options=["planned", "in_progress", "implemented"],
+                                key=f"custom_status_{risk.id}"
+                            )
+
+                        submitted = st.form_submit_button("➕ Add Custom Mitigation", type="primary")
+
+                        if submitted and custom_description:
+                            # Import uuid for generating new ID
+                            import uuid
+                            from src.models import MitigatingMeasure
+
+                            # Create new mitigation
+                            new_mitigation = MitigatingMeasure(
+                                id=str(uuid.uuid4()),
+                                risk_id=risk.id,
+                                measure_description=custom_description,
+                                responsible_party=custom_responsible if custom_responsible else None,
+                                timeline=custom_timeline if custom_timeline else None,
+                                effectiveness_rating=custom_effectiveness,
+                                implementation_status=custom_status
+                            )
+
+                            # Add to project mitigations
+                            updated_mitigations = project.mitigations + [new_mitigation]
+                            updated_project = project.model_copy(update={"mitigations": updated_mitigations})
+                            st.session_state.erm_project = updated_project
+                            st.success("✅ Custom mitigation added!")
+                            st.rerun()
+                        elif submitted and not custom_description:
+                            st.error("❌ Please provide a mitigation description")
 
         # Complete step
         st.markdown("---")
