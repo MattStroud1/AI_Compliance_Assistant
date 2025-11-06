@@ -4697,28 +4697,54 @@ def show_erm_step_2(project: ERMProject):
 
     if not project.step_2_completed:
         if st.button("🤖 Identify Risks with AI", type="primary"):
-            with st.spinner("Analyzing activities and identifying risks..."):
-                pathway = ERMPathway(st.session_state.llm_client)
+            pathway = ERMPathway(st.session_state.llm_client)
 
-                # Load risk register if available
-                risk_register_df = None
-                if project.risk_register_path:
+            # Load risk register if available
+            risk_register_df = None
+            if project.risk_register_path:
+                with st.spinner("Loading risk register..."):
                     risk_register_df = pathway.load_risk_register(project.risk_register_path)
+                    if risk_register_df is not None:
+                        st.info(f"📚 Loaded {len(risk_register_df)} risks from knowledge base")
 
-                # Collect all activities
-                all_activities = []
-                for phase in project.phases:
-                    all_activities.extend(phase.activities)
+            # Collect all activities
+            all_activities = []
+            for phase in project.phases:
+                all_activities.extend(phase.activities)
 
-                # Identify risks
-                identified_risks = pathway.identify_risks_for_activities(
+            # Create progress tracking
+            st.markdown(f"🔄 Analyzing {len(all_activities)} activities in parallel...")
+            progress_bar = st.progress(0)
+            status_text = st.empty()
+
+            # Identify risks with progress tracking
+            identified_risks = []
+            try:
+                # Use parallel processing
+                identified_risks = pathway.identify_risks_for_activities_parallel(
                     all_activities,
-                    risk_register_df
+                    risk_register_df,
+                    progress_callback=lambda current, total: (
+                        progress_bar.progress(current / total),
+                        status_text.text(f"Processing activity {current}/{total}...")
+                    )
                 )
 
-                project.risks = identified_risks
-                st.success(f"✅ Identified {len(identified_risks)} risks!")
+                progress_bar.progress(1.0)
+                status_text.text("✅ Complete!")
+
+                # Update project with risks
+                updated_project = project.model_copy(update={"risks": identified_risks})
+                st.session_state.erm_project = updated_project
+
+                st.success(f"✅ Identified {len(identified_risks)} risks across {len(all_activities)} activities!")
                 st.rerun()
+
+            except Exception as e:
+                st.error(f"❌ Error during risk identification: {e}")
+                print(f"Error in risk identification: {e}")
+                import traceback
+                traceback.print_exc()
 
     # Display risks
     if project.risks:
@@ -4791,14 +4817,38 @@ def show_erm_step_3(project: ERMProject):
 
     if not project.step_3_completed:
         if st.button("🤖 Generate Mitigating Measures with AI", type="primary"):
-            with st.spinner("Generating mitigation strategies..."):
-                pathway = ERMPathway(st.session_state.llm_client)
+            pathway = ERMPathway(st.session_state.llm_client)
 
-                mitigations = pathway.generate_mitigating_measures(project.risks)
-                project.mitigations = mitigations
+            # Create progress tracking
+            st.markdown(f"🔄 Generating mitigations for {len(project.risks)} risks in parallel...")
+            progress_bar = st.progress(0)
+            status_text = st.empty()
+
+            try:
+                # Generate mitigations with progress tracking
+                mitigations = pathway.generate_mitigating_measures_parallel(
+                    project.risks,
+                    progress_callback=lambda current, total: (
+                        progress_bar.progress(current / total),
+                        status_text.text(f"Processing risk {current}/{total}...")
+                    )
+                )
+
+                progress_bar.progress(1.0)
+                status_text.text("✅ Complete!")
+
+                # Update project
+                updated_project = project.model_copy(update={"mitigations": mitigations})
+                st.session_state.erm_project = updated_project
 
                 st.success(f"✅ Generated {len(mitigations)} mitigating measures!")
                 st.rerun()
+
+            except Exception as e:
+                st.error(f"❌ Error generating mitigations: {e}")
+                print(f"Error: {e}")
+                import traceback
+                traceback.print_exc()
 
     # Display mitigations
     if project.mitigations:
@@ -4871,23 +4921,51 @@ def show_erm_step_4(project: ERMProject):
 
     if not project.step_4_completed:
         if st.button("🤖 Map Controls with AI", type="primary"):
-            with st.spinner("Mapping controls from knowledge base..."):
-                pathway = ERMPathway(st.session_state.llm_client)
+            pathway = ERMPathway(st.session_state.llm_client)
 
-                # Load controls KB if available
-                controls_kb_df = None
-                if project.controls_kb_path:
+            # Load controls KB if available
+            controls_kb_df = None
+            if project.controls_kb_path:
+                with st.spinner("Loading controls knowledge base..."):
                     controls_kb_df = pathway.load_controls_knowledge_base(project.controls_kb_path)
+                    if controls_kb_df is not None:
+                        st.info(f"📚 Loaded {len(controls_kb_df)} controls from knowledge base")
 
-                controls = pathway.map_controls_to_risks(
+            # Count risk/mitigation pairs
+            num_pairs = sum(len([m for m in project.mitigations if m.risk_id == risk.id]) for risk in project.risks)
+
+            # Create progress tracking
+            st.markdown(f"🔄 Mapping controls to {num_pairs} risk/mitigation pairs in parallel...")
+            progress_bar = st.progress(0)
+            status_text = st.empty()
+
+            try:
+                # Map controls with progress tracking
+                controls = pathway.map_controls_to_risks_parallel(
                     project.risks,
                     project.mitigations,
-                    controls_kb_df
+                    controls_kb_df,
+                    progress_callback=lambda current, total: (
+                        progress_bar.progress(current / total),
+                        status_text.text(f"Processing pair {current}/{total}...")
+                    )
                 )
 
-                project.controls = controls
+                progress_bar.progress(1.0)
+                status_text.text("✅ Complete!")
+
+                # Update project
+                updated_project = project.model_copy(update={"controls": controls})
+                st.session_state.erm_project = updated_project
+
                 st.success(f"✅ Mapped {len(controls)} controls!")
                 st.rerun()
+
+            except Exception as e:
+                st.error(f"❌ Error mapping controls: {e}")
+                print(f"Error: {e}")
+                import traceback
+                traceback.print_exc()
 
     # Display controls
     if project.controls:

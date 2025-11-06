@@ -294,7 +294,7 @@ class ERMPathway(BasePathway):
         risk_register_df: Optional[pd.DataFrame] = None,
     ) -> List[IdentifiedRisk]:
         """
-        Identify risks for each activity using AI and knowledge base.
+        Identify risks for each activity using AI and knowledge base (sequential).
 
         Args:
             activities: List of project activities
@@ -311,6 +311,68 @@ class ERMPathway(BasePathway):
                 activity, risk_register_df
             )
             risks.extend(activity_risks)
+
+        return risks
+
+    def identify_risks_for_activities_parallel(
+        self,
+        activities: List[ProjectActivity],
+        risk_register_df: Optional[pd.DataFrame] = None,
+        progress_callback: Optional[callable] = None,
+        max_workers: int = 5,
+    ) -> List[IdentifiedRisk]:
+        """
+        Identify risks for each activity using AI and knowledge base (parallel).
+
+        This is much faster than sequential processing as it runs multiple
+        API calls concurrently.
+
+        Args:
+            activities: List of project activities
+            risk_register_df: Risk register DataFrame (optional)
+            progress_callback: Optional callback function(current, total)
+            max_workers: Maximum number of parallel API calls (default: 5)
+
+        Returns:
+            List of identified risks
+        """
+        from concurrent.futures import ThreadPoolExecutor, as_completed
+
+        risks = []
+        completed = 0
+        total = len(activities)
+
+        # Function to process a single activity
+        def process_activity(activity):
+            return self._identify_risks_for_activity(activity, risk_register_df)
+
+        # Process activities in parallel
+        with ThreadPoolExecutor(max_workers=max_workers) as executor:
+            # Submit all tasks
+            future_to_activity = {
+                executor.submit(process_activity, activity): activity
+                for activity in activities
+            }
+
+            # Collect results as they complete
+            for future in as_completed(future_to_activity):
+                activity = future_to_activity[future]
+                try:
+                    activity_risks = future.result()
+                    risks.extend(activity_risks)
+                    completed += 1
+
+                    # Call progress callback if provided
+                    if progress_callback:
+                        progress_callback(completed, total)
+
+                    print(f"✓ Completed {activity.name}: {len(activity_risks)} risks identified")
+
+                except Exception as e:
+                    print(f"✗ Error processing {activity.name}: {e}")
+                    completed += 1
+                    if progress_callback:
+                        progress_callback(completed, total)
 
         return risks
 
@@ -408,7 +470,7 @@ class ERMPathway(BasePathway):
         self, risks: List[IdentifiedRisk]
     ) -> List[MitigatingMeasure]:
         """
-        Generate mitigating measures for identified risks.
+        Generate mitigating measures for identified risks (sequential).
 
         Args:
             risks: List of identified risks
@@ -421,6 +483,58 @@ class ERMPathway(BasePathway):
         for risk in risks:
             risk_measures = self._generate_measures_for_risk(risk)
             measures.extend(risk_measures)
+
+        return measures
+
+    def generate_mitigating_measures_parallel(
+        self,
+        risks: List[IdentifiedRisk],
+        progress_callback: Optional[callable] = None,
+        max_workers: int = 5,
+    ) -> List[MitigatingMeasure]:
+        """
+        Generate mitigating measures for identified risks (parallel).
+
+        Args:
+            risks: List of identified risks
+            progress_callback: Optional callback function(current, total)
+            max_workers: Maximum number of parallel API calls (default: 5)
+
+        Returns:
+            List of mitigating measures
+        """
+        from concurrent.futures import ThreadPoolExecutor, as_completed
+
+        measures = []
+        completed = 0
+        total = len(risks)
+
+        def process_risk(risk):
+            return self._generate_measures_for_risk(risk)
+
+        with ThreadPoolExecutor(max_workers=max_workers) as executor:
+            future_to_risk = {
+                executor.submit(process_risk, risk): risk
+                for risk in risks
+            }
+
+            for future in as_completed(future_to_risk):
+                risk = future_to_risk[future]
+                try:
+                    risk_measures = future.result()
+                    measures.extend(risk_measures)
+                    completed += 1
+
+                    if progress_callback:
+                        progress_callback(completed, total)
+
+                    print(f"✓ Generated {len(risk_measures)} measures for risk")
+
+                except Exception as e:
+                    print(f"✗ Error generating measures: {e}")
+                    completed += 1
+                    if progress_callback:
+                        progress_callback(completed, total)
 
         return measures
 
@@ -527,7 +641,7 @@ class ERMPathway(BasePathway):
         controls_kb_df: Optional[pd.DataFrame] = None,
     ) -> List[ControlMapping]:
         """
-        Map controls from knowledge base to mitigated risks.
+        Map controls from knowledge base to mitigated risks (sequential).
 
         Args:
             risks: List of identified risks
@@ -549,6 +663,70 @@ class ERMPathway(BasePathway):
                     risk, mitigation, controls_kb_df
                 )
                 control_mappings.extend(controls)
+
+        return control_mappings
+
+    def map_controls_to_risks_parallel(
+        self,
+        risks: List[IdentifiedRisk],
+        mitigations: List[MitigatingMeasure],
+        controls_kb_df: Optional[pd.DataFrame] = None,
+        progress_callback: Optional[callable] = None,
+        max_workers: int = 5,
+    ) -> List[ControlMapping]:
+        """
+        Map controls from knowledge base to mitigated risks (parallel).
+
+        Args:
+            risks: List of identified risks
+            mitigations: List of mitigating measures
+            controls_kb_df: Controls knowledge base DataFrame (optional)
+            progress_callback: Optional callback function(current, total)
+            max_workers: Maximum number of parallel API calls (default: 5)
+
+        Returns:
+            List of control mappings
+        """
+        from concurrent.futures import ThreadPoolExecutor, as_completed
+
+        control_mappings = []
+        tasks = []
+
+        # Create task list: (risk, mitigation) pairs
+        for risk in risks:
+            risk_mitigations = [m for m in mitigations if m.risk_id == risk.id]
+            for mitigation in risk_mitigations:
+                tasks.append((risk, mitigation))
+
+        completed = 0
+        total = len(tasks)
+
+        def process_risk_mitigation(risk, mitigation):
+            return self._map_controls_for_mitigation(risk, mitigation, controls_kb_df)
+
+        with ThreadPoolExecutor(max_workers=max_workers) as executor:
+            future_to_task = {
+                executor.submit(process_risk_mitigation, risk, mitigation): (risk, mitigation)
+                for risk, mitigation in tasks
+            }
+
+            for future in as_completed(future_to_task):
+                risk, mitigation = future_to_task[future]
+                try:
+                    controls = future.result()
+                    control_mappings.extend(controls)
+                    completed += 1
+
+                    if progress_callback:
+                        progress_callback(completed, total)
+
+                    print(f"✓ Mapped {len(controls)} controls for risk/mitigation pair")
+
+                except Exception as e:
+                    print(f"✗ Error mapping controls: {e}")
+                    completed += 1
+                    if progress_callback:
+                        progress_callback(completed, total)
 
         return control_mappings
 
