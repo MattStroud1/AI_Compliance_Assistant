@@ -432,15 +432,17 @@ class ERMPathway(BasePathway):
         - Likelihood (1-5, where 1=Very Low, 5=Very High)
         - Impact (1-5, where 1=Very Low, 5=Very High)
 
-        Return as JSON array:
-        [
-            {{
-                "risk_description": "description",
-                "category": "category",
-                "likelihood": 1-5,
-                "impact": 1-5
-            }}
-        ]
+        Return as JSON object with this structure:
+        {{
+            "risks": [
+                {{
+                    "risk_description": "description",
+                    "category": "category",
+                    "likelihood": 1-5,
+                    "impact": 1-5
+                }}
+            ]
+        }}
         """
 
         try:
@@ -584,15 +586,17 @@ class ERMPathway(BasePathway):
         - Timeline for implementation
         - Effectiveness rating (1-5, how effective this measure is at reducing the risk)
 
-        Return as JSON array:
-        [
-            {{
-                "measure_description": "description",
-                "responsible_party": "role",
-                "timeline": "timeline",
-                "effectiveness_rating": 1-5
-            }}
-        ]
+        Return as JSON object with this structure:
+        {{
+            "measures": [
+                {{
+                    "measure_description": "description",
+                    "responsible_party": "role",
+                    "timeline": "timeline",
+                    "effectiveness_rating": 1-5
+                }}
+            ]
+        }}
         """
 
         try:
@@ -814,16 +818,18 @@ class ERMPathway(BasePathway):
         - Frequency (e.g., Daily, Weekly, Monthly, As needed)
         - Control owner (role)
 
-        Return as JSON array:
-        [
-            {{
-                "control_name": "name",
-                "control_type": "type",
-                "control_description": "description",
-                "frequency": "frequency",
-                "control_owner": "role"
-            }}
-        ]
+        Return as JSON object with this structure:
+        {{
+            "controls": [
+                {{
+                    "control_name": "name",
+                    "control_type": "type",
+                    "control_description": "description",
+                    "frequency": "frequency",
+                    "control_owner": "role"
+                }}
+            ]
+        }}
         """
 
         try:
