@@ -3656,7 +3656,8 @@ def show_ropa_pathway_page():
 
                         # Show sources
                         if st.session_state.get(f"draft_sources_{step.id}"):
-                            with st.expander("📚 View Sources"):
+                            st.markdown("**📚 View Sources**")
+                            with st.container():
                                 for source in st.session_state[f"draft_sources_{step.id}"]:
                                     st.markdown(f"- {source}")
                     else:
@@ -4116,14 +4117,18 @@ def show_dpia_pathway_page():
 
                 # Display guidance
                 if step.guidance:
-                    with st.expander("📖 Guidance - Why, What, How"):
+                    st.markdown("**📖 Guidance - Why, What, How**")
+                    with st.container():
                         st.markdown(step.guidance)
+                    st.markdown("")
 
                 # Display checklist
                 if step.checklist_items:
-                    with st.expander("✅ Key Requirements Checklist"):
+                    st.markdown("**✅ Key Requirements Checklist**")
+                    with st.container():
                         for item in step.checklist_items:
                             st.markdown(f"- {item}")
+                    st.markdown("")
 
                 st.markdown("### 📝 Document Your Response")
 
@@ -4171,7 +4176,8 @@ def show_dpia_pathway_page():
 
                         # Show sources
                         if st.session_state.get(f"draft_sources_{step.id}"):
-                            with st.expander("📚 Sources"):
+                            st.markdown("**📚 Sources**")
+                            with st.container():
                                 for source in st.session_state[f"draft_sources_{step.id}"]:
                                     st.caption(f"• {source}")
                     else:
